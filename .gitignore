@@ -1,0 +1,9 @@
+target/
+*.log
+*.class
+*.jar
+*.war
+*.iml
+.idea/
+node_modules/
+.env
