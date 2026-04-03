@@ -6,6 +6,9 @@ import com.scriptsculpt.wiretap.dto.ApiRequest;
 import com.scriptsculpt.wiretap.entity.ApiHistory;
 import com.scriptsculpt.wiretap.service.ApiService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,23 +27,23 @@ public class ApiController {
         return apiService.callAPI(request);
     }
 
-    @GetMapping("/history")
-    public ResponseEntity<List<ApiHistoryResponse>> getHistory() {
-        List<ApiHistoryResponse> history = apiService.getAllHistory();
-        return ResponseEntity.ok(history);
-    }
+//    @GetMapping("/history")
+//    public ResponseEntity<List<ApiHistoryResponse>> getHistory() {
+//        List<ApiHistoryResponse> history = apiService.getAllHistory();
+//        return ResponseEntity.ok(history);
+//    }
 
-    @GetMapping("/history/failed")
-    public ResponseEntity<List<ApiHistory>> getFailed() {
-        List<ApiHistory> failed = apiService.getFailedHistory();
-        return  ResponseEntity.ok(failed);
-    }
-
-    @GetMapping("/history/slow")
-    public ResponseEntity<List<ApiHistory>> getSlow(@RequestParam("threshold") long threshold) {
-        List<ApiHistory> slow = apiService.getSlowHistory(threshold);
-        return  ResponseEntity.ok(slow);
-    }
+//    @GetMapping("/history/failed")
+//    public ResponseEntity<List<ApiHistory>> getFailed() {
+//        List<ApiHistory> failed = apiService.getFailedHistory();
+//        return  ResponseEntity.ok(failed);
+//    }
+//
+//    @GetMapping("/history/slow")
+//    public ResponseEntity<List<ApiHistory>> getSlow(@RequestParam("threshold") long threshold) {
+//        List<ApiHistory> slow = apiService.getSlowHistory(threshold);
+//        return  ResponseEntity.ok(slow);
+//    }
 
     @GetMapping("/history/page")
     public ResponseEntity<Page<ApiHistory>> getPageHistory(
@@ -53,16 +56,38 @@ public class ApiController {
         return ResponseEntity.ok(history);
     }
 
-    @GetMapping("/historyNew")
-    public ResponseEntity<Page<ApiHistoryResponse>> getHistoryNew(
+//    @GetMapping("/historyNew")
+//    public ResponseEntity<Page<ApiHistoryResponse>> getHistoryNew(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size,
+//            @RequestParam(defaultValue = "timestamp") String sortField,
+//            @RequestParam(defaultValue = "true") boolean desc,
+//            @RequestParam(required = false) Integer statusCode,
+//            @RequestParam(required = false) Integer minTime
+//    ) {
+//        Page<ApiHistoryResponse> history = apiService.getHistory(statusCode, minTime, page, size, sortField, desc);
+//        return ResponseEntity.ok(history);
+//    }
+
+
+    @GetMapping("/history")
+    public ResponseEntity<Page<ApiHistoryResponse>>  getHistory(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "timestamp") String sortField,
             @RequestParam(defaultValue = "true") boolean desc,
-            @RequestParam(required = false) Integer statusCode,
-            @RequestParam(required = false) Integer minTime
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Long minThreshold,
+            @RequestParam(required = false) Long maxThreshold,
+            @RequestParam(required = false) String method,
+            @RequestParam(required = false) String url
+
     ) {
-        Page<ApiHistoryResponse> history = apiService.getHistory(statusCode, minTime, page, size, sortField, desc);
+
+        Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ApiHistoryResponse> history = apiService.getHistory(status, minThreshold, maxThreshold, method, url, pageable);
         return ResponseEntity.ok(history);
     }
 }

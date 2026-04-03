@@ -4,15 +4,20 @@ import com.scriptsculpt.wiretap.dto.ApiHistoryResponse;
 import com.scriptsculpt.wiretap.dto.ApiRequest;
 import com.scriptsculpt.wiretap.entity.ApiHistory;
 import com.scriptsculpt.wiretap.repository.ApiHistoryRespository;
+import com.scriptsculpt.wiretap.specification.ApiHistorySpecification;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
+
 
 
 @Service
@@ -49,8 +54,8 @@ public class ApiService {
         long end = System.currentTimeMillis();
 
         ApiHistory history = new ApiHistory();
-        history.setUrl(request.getUrl());
-        history.setMethod(request.getMethod());
+        history.setUrl(request.getUrl().toLowerCase());
+        history.setMethod(request.getMethod().toUpperCase());
         history.setRequestBody(request.getBody());
         history.setResponseBody(response.getBody());
         history.setStatusCode(response.getStatusCode().value());
@@ -73,13 +78,13 @@ public class ApiService {
         )).toList();
     }
 
-    public List<ApiHistory> getFailedHistory() {
-        return repository.findByStatusCodeGreaterThanEqual(400);
-    }
-
-    public List<ApiHistory> getSlowHistory(long threshold) {
-        return repository.findByTimestampGreaterThan(threshold);
-    }
+//    public List<ApiHistory> getFailedHistory() {
+//        return repository.findByStatusCodeGreaterThanEqual(400);
+//    }
+//
+//    public List<ApiHistory> getSlowHistory(long threshold) {
+//        return repository.findByTimestampGreaterThan(threshold);
+//    }
 
 
     /*
@@ -91,19 +96,39 @@ public class ApiService {
         return  repository.findAll(pageable);
     }
 
-    public Page<ApiHistoryResponse> getHistory(Integer statusCode, Integer minTime, int page, int size, String sortField, boolean desc) {
-        Page<ApiHistory> historyPage;
+//    public Page<ApiHistoryResponse> getHistory(Integer statusCode, Integer minTime, int page, int size, String sortField, boolean desc) {
+//        Page<ApiHistory> historyPage;
+//
+//        Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
+//        Pageable pageable = PageRequest.of(page, size, sort);
+//
+//        if(statusCode != null) {
+//            historyPage = repository.findByStatusCode(statusCode, pageable);
+//        }
+//        else {
+//            historyPage = repository.findAll(pageable);
+//        }
+//
+//        return historyPage.map(hist -> new ApiHistoryResponse(
+//                hist.getId(),
+//                hist.getUrl(),
+//                hist.getMethod(),
+//                hist.getStatusCode(),
+//                hist.getTimestamp()
+//        ));
+//    }
 
-        Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+    public Page<ApiHistoryResponse> getHistory(Integer status, Long minThreshold, Long maxThreshold, String method, String url, Pageable pageable) {
 
-        if(statusCode != null) {
-            historyPage = repository.findByStatusCode(statusCode, pageable);
-        }
-        else {
-            historyPage = repository.findAll(pageable);
-        }
+        Specification<ApiHistory> spec = Specification
+                .where(ApiHistorySpecification.hasMethod(method))
+                .and(ApiHistorySpecification.hasStatus(status))
+                .and(ApiHistorySpecification.greaterThanEqualTimestamp(minThreshold))
+                .and(ApiHistorySpecification.lessThanEqualTimestamp(maxThreshold))
+                .and(ApiHistorySpecification.hasMethod(method))
+                .and(ApiHistorySpecification.containsUrl(url));
 
+        Page<ApiHistory> historyPage = repository.findAll(spec,pageable);
         return historyPage.map(hist -> new ApiHistoryResponse(
                 hist.getId(),
                 hist.getUrl(),
