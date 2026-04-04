@@ -44,5 +44,16 @@ public class ApiHistorySpecification {
         };
     }
 
+    public static Specification<ApiHistory> globalSearch(String search) {
+        return (root, query, criteriaBuilder) ->{
+            if(search == null || search.isBlank()) return null;
+            String pattern = "%" + search + "%";
+            return criteriaBuilder.or(
+                    criteriaBuilder.like(root.get("url"), pattern),
+                    criteriaBuilder.like(root.get("requestBody"), pattern),
+                    criteriaBuilder.like(root.get("responseBody"), pattern)
+            );
+        };
+    }
 
 }

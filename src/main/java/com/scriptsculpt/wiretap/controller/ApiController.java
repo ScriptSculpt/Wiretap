@@ -80,14 +80,24 @@ public class ApiController {
             @RequestParam(required = false) Long minThreshold,
             @RequestParam(required = false) Long maxThreshold,
             @RequestParam(required = false) String method,
-            @RequestParam(required = false) String url
-
+            @RequestParam(required = false) String url,
+            @RequestParam(required = false) String search
     ) {
 
         Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<ApiHistoryResponse> history = apiService.getHistory(status, minThreshold, maxThreshold, method, url, pageable);
+        Page<ApiHistoryResponse> history = apiService.getHistory(status, minThreshold, maxThreshold, method, url, search, pageable);
         return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/history/{id}/retry")
+    public ResponseEntity<String> retry(@PathVariable Long id) {
+        return apiService.retryApi(id);
+    }
+
+    @GetMapping("/history/retry-failed")
+    public ResponseEntity<String> retryFailed() {
+        return apiService.retryFailedApis();
     }
 }

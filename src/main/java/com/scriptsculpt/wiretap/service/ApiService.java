@@ -13,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -44,12 +46,24 @@ public class ApiService {
 
         long start = System.currentTimeMillis();
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                request.getUrl(),
-                method,
-                entity,
-                String.class
-        );
+        ResponseEntity<String> response;
+
+        try {
+            response = restTemplate.exchange(
+                    request.getUrl(),
+                    method,
+                    entity,
+                    String.class
+            );
+        } catch (HttpClientErrorException |HttpServerErrorException ex) {
+            response = ResponseEntity
+                    .status(ex.getStatusCode())
+                    .body(ex.getResponseBodyAsString());
+        } catch (Exception ex) {
+            response = ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ex.getMessage());
+        }
 
         long end = System.currentTimeMillis();
 
@@ -63,7 +77,7 @@ public class ApiService {
 
         repository.save(history);
 
-        return  response;
+        return response;
     }
 
     public List<ApiHistoryResponse> getAllHistory() {
@@ -118,7 +132,7 @@ public class ApiService {
 //        ));
 //    }
 
-    public Page<ApiHistoryResponse> getHistory(Integer status, Long minThreshold, Long maxThreshold, String method, String url, Pageable pageable) {
+    public Page<ApiHistoryResponse> getHistory(Integer status, Long minThreshold, Long maxThreshold, String method, String url, String search, Pageable pageable) {
 
         Specification<ApiHistory> spec = Specification
                 .where(ApiHistorySpecification.hasMethod(method))
@@ -126,7 +140,9 @@ public class ApiService {
                 .and(ApiHistorySpecification.greaterThanEqualTimestamp(minThreshold))
                 .and(ApiHistorySpecification.lessThanEqualTimestamp(maxThreshold))
                 .and(ApiHistorySpecification.hasMethod(method))
-                .and(ApiHistorySpecification.containsUrl(url));
+                .and(ApiHistorySpecification.containsUrl(url))
+                .and(ApiHistorySpecification.globalSearch(search));
+
 
         Page<ApiHistory> historyPage = repository.findAll(spec,pageable);
         return historyPage.map(hist -> new ApiHistoryResponse(
@@ -136,5 +152,76 @@ public class ApiService {
                 hist.getStatusCode(),
                 hist.getTimestamp()
         ));
+    }
+
+
+
+
+    public ResponseEntity<String> retryApi(Long id) {
+        ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
+        ResponseEntity<String> response= retry(history);
+        return response;
+    }
+
+    public ResponseEntity<String> retryFailedApis() {
+        List<ApiHistory> failedApis = repository.findByStatusCodeGreaterThanEqual(400);
+
+        int succeed = 0;
+        int failed = 0;
+
+        for(ApiHistory history : failedApis) {
+
+            ResponseEntity<String> response= retry(history);
+            if(response.getStatusCode().is2xxSuccessful()) {
+                succeed++;
+            } else  {
+                failed++;
+            }
+        }
+
+        return ResponseEntity.ok("Total: " + failedApis.size() + ", Succeed: " + succeed + ", Failed: " + failed);
+    }
+
+    private ResponseEntity<String> retry(ApiHistory history) {
+        String url = history.getUrl();
+        HttpMethod method = HttpMethod.valueOf(history.getMethod());
+        String body = history.getRequestBody();
+
+        HttpEntity <String> entity = "GET".equalsIgnoreCase(history.getMethod()) ? new HttpEntity<>((String) null) : new HttpEntity<>(body);
+
+
+        long startTime = System.currentTimeMillis();
+        ResponseEntity<String> response;
+
+        try {
+            response = restTemplate.exchange(
+                    url,
+                    method,
+                    entity,
+                    String.class
+            );
+        } catch (HttpClientErrorException |HttpServerErrorException ex) {
+            response = ResponseEntity
+                    .status(ex.getStatusCode())
+                    .body(ex.getResponseBodyAsString());
+        } catch (Exception ex) {
+            response = ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ex.getMessage());
+        }
+
+        long endTime = System.currentTimeMillis();
+
+        ApiHistory newHistory = new ApiHistory();
+        newHistory.setUrl(url);
+        newHistory.setMethod(history.getMethod());
+        newHistory.setRequestBody(body);
+        newHistory.setResponseBody(response.getBody());
+        newHistory.setStatusCode(response.getStatusCode().value());
+        newHistory.setTimestamp(endTime - startTime);
+
+        repository.save(newHistory);
+
+        return response;
     }
 }
