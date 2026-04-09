@@ -9,6 +9,7 @@ public class ApiHistory {
     private Long id;
     private String url;
     private String method;
+    private String requestId;
 
     @Column(length=5000)
     private String requestBody;
@@ -17,7 +18,9 @@ public class ApiHistory {
     private String responseBody;
 
     private int statusCode;
-    private long timestamp;
+    private long timeTaken;
+
+    private int retryCount;
 
     public Long getId() {
         return  id;
@@ -37,6 +40,14 @@ public class ApiHistory {
 
     public void setMethod(String method) {
         this.method = method;
+    }
+
+    public String getRequestId() {
+        return this.requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
     }
 
     public String getRequestBody() {
@@ -63,11 +74,19 @@ public class ApiHistory {
         this.statusCode = statusCode;
     }
 
-    public long getTimestamp() {
-        return this.timestamp;
+    public long getTimeTaken() {
+        return this.timeTaken;
     }
 
-    public  void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setTimeTaken(long timeTaken) {
+        this.timeTaken = timeTaken;
+    }
+
+    public int getRetryCount() {
+        return this.retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
     }
 }

@@ -49,7 +49,7 @@ public class ApiController {
     public ResponseEntity<Page<ApiHistory>> getPageHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "timestamp") String sortField,
+            @RequestParam(defaultValue = "timeTaken") String sortField,
             @RequestParam(defaultValue = "true") boolean desc
     ) {
         Page<ApiHistory> history = apiService.getPaginatedHistory(page, size, sortField, desc);
@@ -74,7 +74,7 @@ public class ApiController {
     public ResponseEntity<Page<ApiHistoryResponse>>  getHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "timestamp") String sortField,
+            @RequestParam(defaultValue = "timeTaken") String sortField,
             @RequestParam(defaultValue = "true") boolean desc,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long minThreshold,

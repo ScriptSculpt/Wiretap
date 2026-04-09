@@ -23,17 +23,17 @@ public class ApiHistorySpecification {
         };
     }
 
-    public static Specification<ApiHistory> greaterThanEqualTimestamp(Long minThreshold) {
+    public static Specification<ApiHistory> greaterThanEqualTimeTaken(Long minThreshold) {
         return (root, query, criteriaBuilder) -> {
             if(minThreshold == null) return null;
-            return criteriaBuilder.greaterThanOrEqualTo(root.get("timestamp"), minThreshold);
+            return criteriaBuilder.greaterThanOrEqualTo(root.get("timeTaken"), minThreshold);
         };
     }
 
-    public static Specification<ApiHistory> lessThanEqualTimestamp(Long maxThreshold) {
+    public static Specification<ApiHistory> lessThanEqualTimeTaken(Long maxThreshold) {
         return (root, query, criteriaBuilder) -> {
             if(maxThreshold == null) return null;
-            return  criteriaBuilder.lessThanOrEqualTo(root.get("timestamp"), maxThreshold);
+            return  criteriaBuilder.lessThanOrEqualTo(root.get("timeTaken"), maxThreshold);
         };
     }
 
