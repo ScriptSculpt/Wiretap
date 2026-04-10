@@ -33,6 +33,8 @@ public class ApiService {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
 
+    private final Set<String> activeRequestIds = ConcurrentHashMap.newKeySet();
+
     public ApiService(ApiHistoryRespository repository, RestTemplate restTemplate) {
         this.repository = repository;
         this.restTemplate = restTemplate;
@@ -216,7 +218,21 @@ public class ApiService {
     }
 
 
-    private CompletableFuture<ResponseEntity<String>> retry(ApiHistory history, boolean isMaunualRetry) {
+    private CompletableFuture<ResponseEntity<String>> retry(ApiHistory history, boolean isManualRetry) {
+        String requestId = history.getRequestId();
+
+        boolean acquired = activeRequestIds.add(requestId);
+
+        if(!acquired) {
+            return CompletableFuture.completedFuture(
+                    ResponseEntity.status(HttpStatus.CONFLICT).body("Retry already in progress for request id: " + requestId)
+            );
+        }
+
+        return retryInternal(history, isManualRetry);
+    }
+
+    private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isMaunualRetry) {
 
         CompletableFuture<ResponseEntity<String>> future = new CompletableFuture<>();
 
@@ -228,6 +244,7 @@ public class ApiService {
                             .status(history.getStatusCode())
                             .body(history.getResponseBody())
             );
+            activeRequestIds.remove(history.getRequestId());
             return future;
         }
 
@@ -275,6 +292,7 @@ public class ApiService {
 
         if(response.getStatusCode().is2xxSuccessful()) {
             future.complete(response);
+            activeRequestIds.remove(history.getRequestId());
             return future;
         }
 
@@ -282,13 +300,25 @@ public class ApiService {
             long delay = (long) Math.pow(2, retryCount) * 1000;
 
             scheduler.schedule(() -> {
-                CompletableFuture<ResponseEntity<String>> next = retry(newHistory, false);
-                next.thenAccept(result -> future.complete(result));
+                CompletableFuture<ResponseEntity<String>> next = retryInternal(newHistory, false);
+                next.whenComplete((result,ex) -> {
+                    if(ex != null) {
+                        future.completeExceptionally(ex);
+                    }
+                    else future.complete(result);
+                });
             }, delay, TimeUnit.MILLISECONDS);
+        }
+        else {
+            activeRequestIds.remove(history.getRequestId());
+            future.complete(response);
         }
 
         return future;
     }
+
+
+
 
     @PreDestroy
     public void shutdown() {
