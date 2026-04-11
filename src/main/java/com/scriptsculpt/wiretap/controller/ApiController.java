@@ -3,6 +3,7 @@ package com.scriptsculpt.wiretap.controller;
 
 import com.scriptsculpt.wiretap.dto.ApiHistoryResponse;
 import com.scriptsculpt.wiretap.dto.ApiRequest;
+import com.scriptsculpt.wiretap.dto.ApiResponse;
 import com.scriptsculpt.wiretap.entity.ApiHistory;
 import com.scriptsculpt.wiretap.service.ApiService;
 import org.springframework.data.domain.Page;
@@ -22,9 +23,16 @@ public class ApiController {
         this.apiService = apiService;
     }
 
-    @PostMapping("/call")
-    public ResponseEntity<String> callApi(@RequestBody ApiRequest request) {
-        return apiService.callAPI(request);
+//    @PostMapping("/call")
+//    public ResponseEntity<String> callApi(@RequestBody ApiRequest request) {
+//        return apiService.callAPI(request);
+//    }
+
+    @PostMapping("/execute")
+    public ResponseEntity<ApiResponse> execute(@RequestBody ApiRequest request) {
+        ApiResponse response = apiService.executeApi(request);
+
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
 //    @GetMapping("/history")

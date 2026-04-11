@@ -2,6 +2,7 @@ package com.scriptsculpt.wiretap.service;
 
 import com.scriptsculpt.wiretap.dto.ApiHistoryResponse;
 import com.scriptsculpt.wiretap.dto.ApiRequest;
+import com.scriptsculpt.wiretap.dto.ApiResponse;
 import com.scriptsculpt.wiretap.entity.ApiHistory;
 import com.scriptsculpt.wiretap.repository.ApiHistoryRespository;
 import com.scriptsculpt.wiretap.specification.ApiHistorySpecification;
@@ -15,6 +16,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -40,53 +42,134 @@ public class ApiService {
         this.restTemplate = restTemplate;
     }
 
-    public ResponseEntity<String> callAPI(ApiRequest request) {
-//        RestTemplate restTemplate = new RestTemplate();
+//    public ResponseEntity<String> callAPI(ApiRequest request) {
+////        RestTemplate restTemplate = new RestTemplate();
+//
+//        HttpMethod method = HttpMethod.valueOf(request.getMethod());
+//
+////        HttpHeaders headers = new HttpHeaders();
+////        headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//        HttpEntity<String> entity = new HttpEntity<>(request.getBody());
+//
+//        long start = System.currentTimeMillis();
+//
+//        ResponseEntity<String> response;
+//
+//        try {
+//            response = restTemplate.exchange(
+//                    request.getUrl(),
+//                    method,
+//                    entity,
+//                    String.class
+//            );
+//        } catch (HttpClientErrorException |HttpServerErrorException ex) {
+//            response = ResponseEntity
+//                    .status(ex.getStatusCode())
+//                    .body(ex.getResponseBodyAsString());
+//        } catch (Exception ex) {
+//            response = ResponseEntity
+//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(ex.getMessage());
+//        }
+//
+//        long end = System.currentTimeMillis();
+//
+//        saveHistory(request, response, end-start, UUID.randomUUID().toString(), 0);
+//
+//        return response;
+//    }
 
-        HttpMethod method = HttpMethod.valueOf(request.getMethod());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> entity = new HttpEntity<>(request.getBody(), headers);
-
+    public ApiResponse executeApi(ApiRequest request) {
+        String apiRequestId = UUID.randomUUID().toString();
         long start = System.currentTimeMillis();
 
-        ResponseEntity<String> response;
-
         try {
-            response = restTemplate.exchange(
+            HttpEntity<String> entity = "GET".equalsIgnoreCase(request.getMethod()) ? new HttpEntity<>((String)null) :  new HttpEntity<>(request.getBody());
+
+            ResponseEntity<String> response = restTemplate.exchange(
                     request.getUrl(),
-                    method,
+                    HttpMethod.valueOf(request.getMethod()),
                     entity,
                     String.class
             );
-        } catch (HttpClientErrorException |HttpServerErrorException ex) {
-            response = ResponseEntity
-                    .status(ex.getStatusCode())
-                    .body(ex.getResponseBodyAsString());
+
+            long timeTaken = System.currentTimeMillis() - start;
+            saveHistory(request, response, timeTaken, apiRequestId, 0);
+
+            return new ApiResponse(
+                    response.getBody(),
+                    response.getStatusCode().value(),
+                    timeTaken,
+                    apiRequestId
+            );
+        } catch (HttpStatusCodeException ex) {
+            long timeTaken = System.currentTimeMillis() - start;
+            saveErrorHistory(request, ex, timeTaken, apiRequestId, 0);
+
+            return new ApiResponse(
+                    ex.getResponseBodyAsString(),
+                    ex.getStatusCode().value(),
+                    timeTaken,
+                    apiRequestId
+            );
         } catch (Exception ex) {
-            response = ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ex.getMessage());
+            long timeTaken = System.currentTimeMillis() - start;
+            saveGenericErrorHistory(request, ex, timeTaken, apiRequestId, 0);
+
+            return new ApiResponse(
+                    ex.getMessage(),
+                    500,
+                    timeTaken,
+                    apiRequestId
+            );
         }
+    }
 
-        long end = System.currentTimeMillis();
-
+    private void saveHistory(ApiRequest request, ResponseEntity<String> response, long timeTaken, String requestId, int retryCount) {
         ApiHistory history = new ApiHistory();
         history.setUrl(request.getUrl().toLowerCase());
         history.setMethod(request.getMethod().toUpperCase());
-        history.setRequestId(UUID.randomUUID().toString());
+        history.setRequestId(requestId);
         history.setRequestBody(request.getBody());
         history.setResponseBody(response.getBody());
         history.setStatusCode(response.getStatusCode().value());
-        history.setTimeTaken(end - start);
-        history.setRetryCount(0);
+        history.setTimeTaken(timeTaken);
+        history.setRetryCount(retryCount);
 
         repository.save(history);
-
-        return response;
     }
+
+    private void saveErrorHistory(ApiRequest request, HttpStatusCodeException ex, long timeTaken, String requestId, int retryCount) {
+        ApiHistory history = new ApiHistory();
+        history.setUrl(request.getUrl().toLowerCase());
+        history.setMethod(request.getMethod().toUpperCase());
+        history.setRequestId(requestId);
+        history.setRequestBody(request.getBody());
+        history.setResponseBody(ex.getResponseBodyAsString());
+        history.setStatusCode(ex.getStatusCode().value());
+        history.setTimeTaken(timeTaken);
+        history.setRetryCount(retryCount);
+
+        repository.save(history);
+    }
+
+    private void saveGenericErrorHistory(ApiRequest request, Exception ex, long timeTaken, String requestId, int retryCount) {
+        ApiHistory history = new ApiHistory();
+        history.setUrl(request.getUrl().toLowerCase());
+        history.setMethod(request.getMethod().toUpperCase());
+        history.setRequestId(requestId);
+        history.setRequestBody(request.getBody());
+        history.setResponseBody(ex.getMessage());
+        history.setStatusCode(500);
+        history.setTimeTaken(timeTaken);
+        history.setRetryCount(retryCount);
+
+        repository.save(history);
+    }
+
+
 
     public List<ApiHistoryResponse> getAllHistory() {
         List<ApiHistory> history = repository.findAll();
