@@ -11,10 +11,10 @@ public class ApiHistory {
     private String method;
     private String requestId;
 
-    @Column(length=5000)
+    @Column(columnDefinition="TEXT")
     private String requestBody;
 
-    @Column(length=10000)
+    @Column(columnDefinition="TEXT")
     private String responseBody;
 
     private int statusCode;

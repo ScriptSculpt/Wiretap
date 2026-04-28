@@ -1,28 +1,48 @@
 package com.scriptsculpt.wiretap.dto;
 
+import tools.jackson.databind.ObjectMapper;
+
 public class ApiResponse {
-    private String responseBody;
+    private Object responseBody;
     private int statusCode;
     private long timeTaken;
     private String requestId;
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     ApiResponse() {
 
     }
 
     public ApiResponse(String responseBody, int statusCode, long timeTaken, String requestId) {
-        this.responseBody = responseBody;
+        this.responseBody = parseBody(responseBody);
         this.statusCode = statusCode;
         this.timeTaken = timeTaken;
         this.requestId = requestId;
     }
 
-    public String getResponseBody() {
+    private Object parseBody(String body) {
+        if(body == null) return null;
+
+        body = body.trim();
+        if(!(body.startsWith("{") || body.startsWith("["))) {
+            return body;
+        }
+
+        try{
+            return mapper.readValue(body, Object.class);
+        } catch (Exception e) {
+            // Fallback to string
+            return body;
+        }
+    }
+
+    public Object getResponseBody() {
         return this.responseBody;
     }
 
     public void setResponseBody(String responseBody) {
-        this.responseBody = responseBody;
+        this.responseBody = parseBody(responseBody);
     }
 
     public int getStatusCode() {
