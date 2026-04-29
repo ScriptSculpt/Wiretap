@@ -22,6 +22,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
@@ -46,6 +47,8 @@ public class ApiService {
 
     private final Set<String> activeRequestIds = ConcurrentHashMap.newKeySet();
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     public ApiService(ApiHistoryRespository repository, RestTemplate restTemplate) {
         this.repository = repository;
         this.restTemplate = restTemplate;
@@ -53,15 +56,23 @@ public class ApiService {
 
 
     public ApiResponse executeApi(ApiRequest request) {
+        HttpMethod method = resolveMethod(request.getMethod());
+
         String apiRequestId = UUID.randomUUID().toString();
         long start = System.currentTimeMillis();
 
         try {
-            HttpEntity<String> entity = "GET".equalsIgnoreCase(request.getMethod()) ? new HttpEntity<>((String)null) :  new HttpEntity<>(request.getBody());
+            HttpHeaders headers = new HttpHeaders();
+            if(request.getHeaders() != null) {
+                request.getHeaders().forEach((key, value) -> headers.set(key, value));
+            }
+
+            boolean hasBody = request.getBody() != null && !request.getBody().isBlank();
+            HttpEntity<String> entity = hasBody ? new HttpEntity<>(request.getBody(), headers) : new HttpEntity<>(headers);
 
             ResponseEntity<String> response = restTemplate.exchange(
                     request.getUrl(),
-                    HttpMethod.valueOf(request.getMethod()),
+                    method,
                     entity,
                     String.class
             );
@@ -351,10 +362,29 @@ public class ApiService {
 
 
         String url = history.getUrl();
-        HttpMethod method = HttpMethod.valueOf(history.getMethod());
+        HttpMethod method = resolveMethod(history.getMethod());
         String body = history.getRequestBody();
 
-        HttpEntity <String> entity = "GET".equalsIgnoreCase(history.getMethod()) ? new HttpEntity<>((String) null) : new HttpEntity<>(body);
+//        HttpEntity <String> entity = "GET".equalsIgnoreCase(history.getMethod()) ? new HttpEntity<>((String) null) : new HttpEntity<>(body);
+
+        HttpHeaders headers = new HttpHeaders();
+        if(history.getHeaders() != null) {
+            try{
+                Map<String, String> headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
+                headerMap.forEach((key, value) -> headers.set(key, value));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse headers", e);
+            }
+
+        }
+
+        boolean hasBody = body != null && !body.isEmpty();
+
+        if(hasBody && headers.getContentType() == null) {
+            headers.setContentType(MediaType.APPLICATION_JSON);
+        }
+
+        HttpEntity<String> entity = hasBody ? new HttpEntity<>(body, headers) : new HttpEntity<>(headers);
 
         long startTime = System.currentTimeMillis();
         ResponseEntity<String> response;
@@ -452,6 +482,14 @@ public class ApiService {
         if(body.length()>MAX_BODY_SIZE) return body.substring(0, MAX_BODY_SIZE) + "...[TRUNCATED]";
 
         return body;
+    }
+
+    private HttpMethod resolveMethod(String method) {
+        try {
+            return HttpMethod.valueOf(method.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid HTTP method: " + method);
+        }
     }
 
     @PreDestroy

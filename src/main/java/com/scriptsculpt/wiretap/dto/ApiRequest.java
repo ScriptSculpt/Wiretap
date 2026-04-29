@@ -5,6 +5,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
+import java.util.Map;
+
 
 public class ApiRequest {
 
@@ -19,6 +21,7 @@ public class ApiRequest {
     )
     private String method;
     private String body;
+    private Map<String, String> headers;
 
     public String getUrl() {
         return this.url;
@@ -42,5 +45,13 @@ public class ApiRequest {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public Map<String, String> getHeaders() {
+        return this.headers;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.headers = headers;
     }
 }

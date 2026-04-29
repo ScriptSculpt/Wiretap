@@ -14,6 +14,9 @@ public class ApiHistory {
     @Column(columnDefinition="TEXT")
     private String requestBody;
 
+    @Column(length = 2000)
+    private String headers;
+
     @Column(columnDefinition="TEXT")
     private String responseBody;
 
@@ -56,6 +59,14 @@ public class ApiHistory {
 
     public void setRequestBody(String requestBody) {
         this.requestBody = requestBody;
+    }
+
+    public String getHeaders() {
+        return this.headers;
+    }
+
+    public void setHeaders(String headers) {
+        this.headers = headers;
     }
 
     public String getResponseBody() {
