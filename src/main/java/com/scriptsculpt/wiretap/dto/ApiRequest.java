@@ -1,8 +1,22 @@
 package com.scriptsculpt.wiretap.dto;
 
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
+
 public class ApiRequest {
+
+    @NotBlank(message = "URL must not be empty")
     private String url;
+
+    @NotBlank(message = "HTTP Method must not be empty")
+    @Pattern(
+            regexp = "GET|POST|PUT|DELETE|PATCH",
+            flags =  Pattern.Flag.CASE_INSENSITIVE,
+            message = "Invalid HTTP Method"
+    )
     private String method;
     private String body;
 

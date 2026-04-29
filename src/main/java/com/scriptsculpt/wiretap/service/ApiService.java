@@ -3,6 +3,7 @@ package com.scriptsculpt.wiretap.service;
 import com.scriptsculpt.wiretap.dto.ApiHistoryResponse;
 import com.scriptsculpt.wiretap.dto.ApiRequest;
 import com.scriptsculpt.wiretap.dto.ApiResponse;
+import com.scriptsculpt.wiretap.dto.RetryResponse;
 import com.scriptsculpt.wiretap.entity.ApiHistory;
 import com.scriptsculpt.wiretap.repository.ApiHistoryRespository;
 import com.scriptsculpt.wiretap.specification.ApiHistorySpecification;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -208,21 +210,55 @@ public class ApiService {
         ));
     }
 
+    public void deleteById(Long id) {
+        if(!repository.existsById(id)) {
+            throw new IllegalArgumentException("No record found with id: "+ id);
+        }
+        repository.deleteById(id);
+    }
 
+    @Transactional
+    public int deleteByStatus(String status) {
+        if("SUCCEED".equalsIgnoreCase(status)) {
+            return repository.deleteByStatusCodeLessThan(400);
+        }else if("FAILED".equalsIgnoreCase(status)) {
+            return repository.deleteByStatusCodeGreaterThanEqual(400);
+        }
+        throw new IllegalArgumentException("Invalid status: " + status);
+    }
 
+    public long deleteAll() {
+        long count = repository.count();
+        if(count == 0) {
+            throw new IllegalArgumentException("No records found");
+        }
+        repository.deleteAll();
+        return count;
+    }
 
-    public ResponseEntity<String> retryApi(Long id) {
+    public ApiResponse retryApi(Long id) {
         ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
-        CompletableFuture<ResponseEntity<String>> response= retry(history, true);
+        CompletableFuture<ResponseEntity<String>> future= retry(history, true);
 
+        long start = System.currentTimeMillis();
         try {
-            return response.join();
+            ResponseEntity<String> res = future.join();
+
+            long timeTaken = System.currentTimeMillis() - start;
+
+            return new ApiResponse(
+                    res.getBody(),
+                    res.getStatusCode().value(),
+                    timeTaken,
+                    history.getRequestId()
+            );
         } catch (Exception ex){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+            Throwable cause = (ex.getCause() != null) ? ex.getCause() : ex;
+            throw new RuntimeException("Retry failed due to external API error", cause);
         }
     }
 
-    public ResponseEntity<String> retryFailedApis() {
+    public RetryResponse retryFailedApis() {
         List<ApiHistory> failedApis = repository.findByStatusCodeGreaterThanEqual(400);
         Map<String, ApiHistory> lastestFailedApis = new HashMap<>();
 
@@ -240,8 +276,13 @@ public class ApiService {
         // ExecutorService executorService = Executors.newFixedThreadPool(20);
         List<CompletableFuture<ResponseEntity<String>>> futures = new ArrayList<>();
 
+        int skipped = 0;
+
         for(ApiHistory history : failedApisToRetry) {
-            if(history.getRetryCount() >= MAX_RETRIES) continue;
+            if(history.getRetryCount() >= MAX_RETRIES) {
+                skipped++;
+                continue;
+            }
             futures.add(retry(history, false));
         }
 
@@ -249,6 +290,7 @@ public class ApiService {
 
         int succeed = 0;
         int failed = 0;
+
 
         for(CompletableFuture<ResponseEntity<String>> future : futures) {
             try {
@@ -266,7 +308,13 @@ public class ApiService {
         }
 //        executorService.shutdown();
 
-        return ResponseEntity.ok("Total: " + failedApis.size() + ", Succeed: " + succeed + ", Failed: " + failed);
+        int total = futures.size() + skipped;
+        return new RetryResponse(
+                total,
+                succeed,
+                failed,
+                skipped
+        );
     }
 
 

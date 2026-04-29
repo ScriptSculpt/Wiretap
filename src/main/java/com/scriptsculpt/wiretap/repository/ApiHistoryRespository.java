@@ -18,4 +18,7 @@ import java.util.List;
 
 public interface ApiHistoryRespository extends JpaRepository<ApiHistory, Long>, JpaSpecificationExecutor<ApiHistory> {
     List<ApiHistory> findByStatusCodeGreaterThanEqual(int statusCode);
+
+    int deleteByStatusCodeGreaterThanEqual(int statusCode);
+    int deleteByStatusCodeLessThan(int statusCode);
 }
