@@ -5,14 +5,14 @@ public class ApiHistoryResponse {
     private String url;
     private String method;
     private int statusCode;;
-    private long timestamp;
+    private long timeTaken;
 
-    public ApiHistoryResponse(Long id, String url, String method, int statusCode, long timestamp) {
+    public ApiHistoryResponse(Long id, String url, String method, int statusCode, long timeTaken) {
         this.id = id;
         this.url = url;
         this.method = method;
         this.statusCode = statusCode;
-        this.timestamp = timestamp;
+        this.timeTaken = timeTaken;
     }
 
     public Long getId() {
@@ -47,11 +47,11 @@ public class ApiHistoryResponse {
         this.statusCode = statusCode;
     }
 
-    public long getTimestamp() {
-        return this.timestamp;
+    public long getTimeTaken() {
+        return this.timeTaken;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setTimeTaken(long timeTaken) {
+        this.timeTaken = timeTaken;
     }
 }
