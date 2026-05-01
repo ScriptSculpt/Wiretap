@@ -1,0 +1,222 @@
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-list__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.history-list__delete-all {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #ef4444;
+  border-radius: 4px;
+  padding: 6px 12px;
+  color: #ef4444;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-list__delete-all:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.history-list__loading,
+.history-list__empty,
+.history-list__error {
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  background: rgba(17, 24, 39, 0.5);
+  border-radius: 6px;
+  border: 1px solid #1f2937;
+}
+
+.history-list__error {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+}
+
+.history-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  transition: border-color 0.2s ease;
+}
+
+.history-item:hover {
+  border-color: #3b82f6;
+}
+
+.history-item__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-item__method {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.history-item__method.method--get {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.history-item__method.method--post {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.history-item__method.method--put {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.history-item__method.method--patch {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.history-item__method.method--delete {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.history-item__url {
+  color: #e5e7eb;
+  font-size: 13px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+}
+
+.history-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.history-item__status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.history-item__status.status--success {
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.history-item__status.status--redirect {
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.history-item__status.status--client-error {
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.history-item__status.status--server-error {
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.history-item__time,
+.history-item__timestamp {
+  color: #6b7280;
+}
+
+.history-item__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.history-item__retry,
+.history-item__delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #1f2937;
+  border-radius: 4px;
+  padding: 6px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-item__retry:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.history-item__delete:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.history-list__pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.pagination-btn {
+  background: transparent;
+  border: 1px solid #1f2937;
+  border-radius: 4px;
+  padding: 6px 12px;
+  color: #9ca3af;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: #6b7280;
+  font-size: 12px;
+}

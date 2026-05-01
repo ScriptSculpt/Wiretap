@@ -58,16 +58,16 @@ public class ApiController {
 //        return  ResponseEntity.ok(slow);
 //    }
 
-    @GetMapping("/history/page")
-    public ResponseEntity<Page<ApiHistory>> getPageHistory(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "timeTaken") String sortField,
-            @RequestParam(defaultValue = "true") boolean desc
-    ) {
-        Page<ApiHistory> history = apiService.getPaginatedHistory(page, size, sortField, desc);
-        return ResponseEntity.ok(history);
-    }
+//    @GetMapping("/history/page")
+//    public ResponseEntity<Page<ApiHistory>> getPageHistory(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size,
+//            @RequestParam(defaultValue = "timeTaken") String sortField,
+//            @RequestParam(defaultValue = "true") boolean desc
+//    ) {
+//        Page<ApiHistory> history = apiService.getPaginatedHistory(page, size, sortField, desc);
+//        return ResponseEntity.ok(history);
+//    }
 
 //    @GetMapping("/historyNew")
 //    public ResponseEntity<Page<ApiHistoryResponse>> getHistoryNew(
@@ -85,16 +85,16 @@ public class ApiController {
 
     @GetMapping("/history")
     public ResponseEntity<Map<String, Object>>  getHistory(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "timeTaken") String sortField,
-            @RequestParam(defaultValue = "true") boolean desc,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) Long minThreshold,
-            @RequestParam(required = false) Long maxThreshold,
-            @RequestParam(required = false) String method,
-            @RequestParam(required = false) String url,
-            @RequestParam(required = false) String search
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "5") int size,
+            @RequestParam(name = "sortField", defaultValue = "timestamp") String sortField,
+            @RequestParam(name = "desc", defaultValue = "true") boolean desc,
+            @RequestParam(name = "status", required = false) Integer status,
+            @RequestParam(name = "minThreshold", required = false) Long minThreshold,
+            @RequestParam(name = "maxThreshold", required = false) Long maxThreshold,
+            @RequestParam(name = "method", required = false) String method,
+            @RequestParam(name = "url", required = false) String url,
+            @RequestParam(name = "search", required = false) String search
     ) {
 
         Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
@@ -113,7 +113,7 @@ public class ApiController {
     }
 
     @GetMapping("/history/{id}/retry")
-    public ResponseEntity<ApiResponse> retry(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> retry(@PathVariable(name = "id") Long id) {
         ApiResponse response = apiService.retryApi(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -125,13 +125,13 @@ public class ApiController {
     }
 
     @DeleteMapping("/history/{id}/delete")
-    public ResponseEntity<String> deleteApi(@PathVariable Long id) {
+    public ResponseEntity<String> deleteApi(@PathVariable(name="id") Long id) {
         apiService.deleteById(id);
         return ResponseEntity.ok("Deleted record with id "+ id);
     }
 
     @DeleteMapping("/history/delete")
-    public ResponseEntity<String> deleteByStatus(@RequestParam String status) {
+    public ResponseEntity<String> deleteByStatus(@RequestParam(name = "status") String status) {
         int deleted = apiService.deleteByStatus(status);
         if(deleted == 0) {
             throw new IllegalArgumentException("No records found for status: " + status);
@@ -141,7 +141,7 @@ public class ApiController {
 
     @DeleteMapping("/history/delete-all")
     public ResponseEntity<String> deleteAll(
-            @RequestParam(required = true) String confirm
+            @RequestParam(name = "confirm", required = true) String confirm
     ) {
         if(!"YES".equalsIgnoreCase(confirm)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid confirmation");

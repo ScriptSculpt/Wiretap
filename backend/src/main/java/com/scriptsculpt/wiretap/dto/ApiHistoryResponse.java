@@ -1,18 +1,22 @@
 package com.scriptsculpt.wiretap.dto;
 
+import java.time.LocalDateTime;
+
 public class ApiHistoryResponse {
     private Long id;
     private String url;
     private String method;
     private int statusCode;;
     private long timeTaken;
+    private LocalDateTime timestamp;
 
-    public ApiHistoryResponse(Long id, String url, String method, int statusCode, long timeTaken) {
+    public ApiHistoryResponse(Long id, String url, String method, int statusCode, long timeTaken, LocalDateTime timestamp) {
         this.id = id;
         this.url = url;
         this.method = method;
         this.statusCode = statusCode;
         this.timeTaken = timeTaken;
+        this.timestamp = timestamp;
     }
 
     public Long getId() {
@@ -53,5 +57,13 @@ public class ApiHistoryResponse {
 
     public void setTimeTaken(long timeTaken) {
         this.timeTaken = timeTaken;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return this.timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 }

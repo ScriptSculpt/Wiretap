@@ -1,0 +1,131 @@
+/* filepath: src/components/ResponsePanel.css */
+
+.response-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.response-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.response-panel__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.response-panel__copy {
+  background: transparent;
+  border: 1px solid #1f2937;
+  border-radius: 4px;
+  padding: 6px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.response-panel__copy:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.response-panel__meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.response-panel__status {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.response-panel__status.status--success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.response-panel__status.status--redirect {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.response-panel__status.status--client-error {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.response-panel__status.status--server-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.response-panel__time {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #1f2937;
+  color: #9ca3af;
+}
+
+.response-panel__body-section {
+  flex: 1;
+  overflow: auto;
+}
+
+.response-panel__body {
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  padding: 16px;
+  color: #e5e7eb;
+  font-size: 13px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  min-height: 200px;
+}
+
+.response-panel__loading,
+.response-panel__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  background: rgba(17, 24, 39, 0.5);
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.response-panel__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #1f2937;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

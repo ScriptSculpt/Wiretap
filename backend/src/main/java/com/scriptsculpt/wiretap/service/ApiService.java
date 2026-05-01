@@ -25,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,6 +62,8 @@ public class ApiService {
         String apiRequestId = UUID.randomUUID().toString();
         long start = System.currentTimeMillis();
 
+        LocalDateTime now = LocalDateTime.now();
+
         try {
             HttpHeaders headers = new HttpHeaders();
             if(request.getHeaders() != null) {
@@ -86,7 +89,8 @@ public class ApiService {
                     response,
                     timeTaken,
                     apiRequestId,
-                    0
+                    0,
+                    now
             );
 
             saveHistory(history);
@@ -110,7 +114,8 @@ public class ApiService {
                     response,
                     timeTaken,
                     apiRequestId,
-                    0
+                    0,
+                    now
             );
 
             saveHistory(history);
@@ -134,7 +139,8 @@ public class ApiService {
                     response,
                     timeTaken,
                     apiRequestId,
-                    0
+                    0,
+                    now
             );
 
             saveHistory(history);
@@ -148,17 +154,17 @@ public class ApiService {
         }
     }
 
-    public List<ApiHistoryResponse> getAllHistory() {
-        List<ApiHistory> history = repository.findAll();
-
-        return history.stream().map(hist -> new ApiHistoryResponse(
-                hist.getId(),
-                hist.getUrl(),
-                hist.getMethod(),
-                hist.getStatusCode(),
-                hist.getTimeTaken()
-        )).toList();
-    }
+//    public List<ApiHistoryResponse> getAllHistory() {
+//        List<ApiHistory> history = repository.findAll();
+//
+//        return history.stream().map(hist -> new ApiHistoryResponse(
+//                hist.getId(),
+//                hist.getUrl(),
+//                hist.getMethod(),
+//                hist.getStatusCode(),
+//                hist.getTimeTaken()
+//        )).toList();
+//    }
 
 //    public List<ApiHistory> getFailedHistory() {
 //        return repository.findByStatusCodeGreaterThanEqual(400);
@@ -172,11 +178,11 @@ public class ApiService {
     /*
     Type Page to ensure that the frontend can easily access the page info like size, total elements and total pages.
     * */
-    public Page<ApiHistory> getPaginatedHistory(int page, int size, String sortField, boolean desc) {
-        Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        return  repository.findAll(pageable);
-    }
+//    public Page<ApiHistory> getPaginatedHistory(int page, int size, String sortField, boolean desc) {
+//        Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
+//        Pageable pageable = PageRequest.of(page, size, sort);
+//        return  repository.findAll(pageable);
+//    }
 
 //    public Page<ApiHistoryResponse> getHistory(Integer statusCode, Integer minTime, int page, int size, String sortField, boolean desc) {
 //        Page<ApiHistory> historyPage;
@@ -217,7 +223,8 @@ public class ApiService {
                 hist.getUrl(),
                 hist.getMethod(),
                 hist.getStatusCode(),
-                hist.getTimeTaken()
+                hist.getTimeTaken(),
+                hist.getTimestamp()
         ));
     }
 
@@ -249,9 +256,10 @@ public class ApiService {
 
     public ApiResponse retryApi(Long id) {
         ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
-        CompletableFuture<ResponseEntity<String>> future= retry(history, true);
 
         long start = System.currentTimeMillis();
+        CompletableFuture<ResponseEntity<String>> future= retry(history, true);
+
         try {
             ResponseEntity<String> res = future.join();
 
@@ -386,6 +394,7 @@ public class ApiService {
 
         HttpEntity<String> entity = hasBody ? new HttpEntity<>(body, headers) : new HttpEntity<>(headers);
 
+        LocalDateTime now = LocalDateTime.now();
         long startTime = System.currentTimeMillis();
         ResponseEntity<String> response;
 
@@ -415,7 +424,8 @@ public class ApiService {
                 response,
                 endTime-startTime,
                 history.getRequestId(),
-                isManualRetry ? 0 : retryCount + 1
+                isManualRetry ? 0 : retryCount + 1,
+                now
         );
 
         saveHistory(newHistory);
@@ -451,7 +461,7 @@ public class ApiService {
         return future;
     }
 
-    private ApiHistory buildHistory(String url, String method, String requestBody, ResponseEntity<String> response, long timeTaken, String requestId, int retryCount) {
+    private ApiHistory buildHistory(String url, String method, String requestBody, ResponseEntity<String> response, long timeTaken, String requestId, int retryCount, LocalDateTime timestamp) {
         ApiHistory newHistory = new ApiHistory();
         newHistory.setUrl(url);
         newHistory.setMethod(method);
@@ -461,6 +471,7 @@ public class ApiService {
         newHistory.setStatusCode(response.getStatusCode().value());
         newHistory.setTimeTaken(timeTaken);
         newHistory.setRetryCount(retryCount);
+        newHistory.setTimestamp(timestamp);
 
         return  newHistory;
     }

@@ -2,6 +2,8 @@ package com.scriptsculpt.wiretap.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 public class ApiHistory {
     @Id
@@ -24,6 +26,7 @@ public class ApiHistory {
     private long timeTaken;
 
     private int retryCount;
+    private LocalDateTime timestamp;
 
     public Long getId() {
         return  id;
@@ -99,5 +102,13 @@ public class ApiHistory {
 
     public void setRetryCount(int retryCount) {
         this.retryCount = retryCount;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return this.timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 }
