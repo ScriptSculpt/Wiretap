@@ -27,7 +27,7 @@ export interface ApiHistoryItem {
   method: string;
   statusCode: number;
   timeTaken: number;
-//   timestamp: string;   // Needs to be removed
+//   timestamp: string;
 //   requestBody?: string;
 //   responseBody?: string;
 //   headers?: Record<string, string>;    // needs to be removed

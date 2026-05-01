@@ -56,4 +56,11 @@ public class ApiHistorySpecification {
         };
     }
 
+    public static Specification<ApiHistory> hasIds(List<Long> ids) {
+        return (root, query, criteriaBuilder) ->  {
+            if(ids == null || ids.isEmpty()) return null;
+            return root.get("id").in(ids);
+        };
+    }
+
 }

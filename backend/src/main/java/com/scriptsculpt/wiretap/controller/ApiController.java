@@ -94,13 +94,14 @@ public class ApiController {
             @RequestParam(name = "maxThreshold", required = false) Long maxThreshold,
             @RequestParam(name = "method", required = false) String method,
             @RequestParam(name = "url", required = false) String url,
-            @RequestParam(name = "search", required = false) String search
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "ids", required = false) List<Long> ids
     ) {
 
         Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<ApiHistoryResponse> history = apiService.getHistory(status, minThreshold, maxThreshold, method, url, search, pageable);
+        Page<ApiHistoryResponse> history = apiService.getHistory(status, minThreshold, maxThreshold, method, url, search, pageable, ids);
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", history.getContent());

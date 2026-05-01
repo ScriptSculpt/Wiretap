@@ -1,16 +1,23 @@
 package com.scriptsculpt.wiretap.dto;
 
+import java.util.List;
+
 public class RetryResponse {
     private int total;
     private int succeed;
     private int failed;
     private int skipped;
 
-    public RetryResponse(int total, int succeed, int failed, int skipped) {
+    private List<Long> successIds;
+    private List<Long> failedIds;
+
+    public RetryResponse(int total, int succeed, int failed, int skipped, List<Long> successIds, List<Long> failedIds) {
         this.total = total;
         this.succeed = succeed;
         this.failed = failed;
         this.skipped = skipped;
+        this.successIds = successIds;
+        this.failedIds = failedIds;
     }
 
     public int getTotal() {
@@ -43,5 +50,21 @@ public class RetryResponse {
 
     public void setSkipped(int skipped) {
         this.skipped = skipped;
+    }
+
+    public List<Long> getSuccessIds() {
+        return this.successIds;
+    }
+
+    public void setSuccessIds(List<Long> successIds) {
+        this.successIds = successIds;
+    }
+
+    public List<Long> getFailedIds() {
+        return this.failedIds;
+    }
+
+    public void setFailedIds(List<Long> failedIds) {
+        this.failedIds = failedIds;
     }
 }

@@ -206,7 +206,7 @@ public class ApiService {
 //        ));
 //    }
 
-    public Page<ApiHistoryResponse> getHistory(Integer status, Long minThreshold, Long maxThreshold, String method, String url, String search, Pageable pageable) {
+    public Page<ApiHistoryResponse> getHistory(Integer status, Long minThreshold, Long maxThreshold, String method, String url, String search, Pageable pageable, List<Long> ids) {
 
         Specification<ApiHistory> spec = Specification
                 .where(ApiHistorySpecification.hasMethod(method))
@@ -214,7 +214,8 @@ public class ApiService {
                 .and(ApiHistorySpecification.greaterThanEqualTimeTaken(minThreshold))
                 .and(ApiHistorySpecification.lessThanEqualTimeTaken(maxThreshold))
                 .and(ApiHistorySpecification.containsUrl(url))
-                .and(ApiHistorySpecification.globalSearch(search));
+                .and(ApiHistorySpecification.globalSearch(search))
+                .and(ApiHistorySpecification.hasIds(ids));
 
 
         Page<ApiHistory> historyPage = repository.findAll(spec,pageable);
@@ -294,6 +295,7 @@ public class ApiService {
 
         // ExecutorService executorService = Executors.newFixedThreadPool(20);
         List<CompletableFuture<ResponseEntity<String>>> futures = new ArrayList<>();
+        List<ApiHistory> historyList = new ArrayList<>();
 
         int skipped = 0;
 
@@ -302,6 +304,7 @@ public class ApiService {
                 skipped++;
                 continue;
             }
+            historyList.add(history);
             futures.add(retry(history, false));
         }
 
@@ -310,29 +313,37 @@ public class ApiService {
         int succeed = 0;
         int failed = 0;
 
+        List<Long> successIds = new ArrayList<>();
+        List<Long> failedIds = new ArrayList<>();
 
-        for(CompletableFuture<ResponseEntity<String>> future : futures) {
+        for(int i=0; i< futures.size(); i++) {
+            CompletableFuture<ResponseEntity<String>> future = futures.get(i);
+            ApiHistory history = historyList.get(i);
             try {
                 ResponseEntity<String> response = future.join();
                 if(response.getStatusCode().is2xxSuccessful()) {
                     succeed++;
+                    successIds.add(history.getId());
                 }
                 else  {
-
                     failed++;
+                    failedIds.add(history.getId());
                 }
             } catch (Exception ex) {
                 failed++;
+                failedIds.add(history.getId());
             }
         }
 //        executorService.shutdown();
 
-        int total = futures.size() + skipped;
+        int total = succeed + failed + skipped;
         return new RetryResponse(
                 total,
                 succeed,
                 failed,
-                skipped
+                skipped,
+                successIds,
+                failedIds
         );
     }
 
