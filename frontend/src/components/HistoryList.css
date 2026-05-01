@@ -16,7 +16,11 @@
   color: #e5e7eb;
 }
 
-.history-list__delete-all {
+.history-list__actions {
+  position: relative;
+}
+
+.history-list__delete-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -30,8 +34,42 @@
   transition: all 0.2s ease;
 }
 
-.history-list__delete-all:hover {
+.history-list__delete-toggle:hover {
   background: rgba(239, 68, 68, 0.1);
+}
+
+.history-list__delete-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 100;
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.history-list__delete-option {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.history-list__delete-option:hover {
+  background: #1f2937;
+}
+
+.history-list__delete-option:first-child {
+  border-bottom: 1px solid #1f2937;
 }
 
 .history-list__loading,

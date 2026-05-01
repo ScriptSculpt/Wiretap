@@ -20,7 +20,7 @@ export const deleteAllHistory = async (): Promise<void> => {
   }
 };
 
-export const deleteHistoryByStatus = async (status: number): Promise<void> => {
+export const deleteHistoryByStatus = async (status: string): Promise<void> => {
   const response = await fetch(`/api/history/delete?status=${status}`, {
     method: 'DELETE',
   });
