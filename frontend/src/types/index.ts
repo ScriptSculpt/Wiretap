@@ -27,27 +27,16 @@ export interface ApiHistoryItem {
   method: string;
   statusCode: number;
   timeTaken: number;
-//   timestamp: string;
-//   requestBody?: string;
-//   responseBody?: string;
-//   headers?: Record<string, string>;    // needs to be removed
 }
 
-// {
-//     "size": 5,
-//     "totalPages": 1,
-//     "page": 0,
-//     "content": [
-//         {
-//             "id": 1,
-//             "url": "https://jsonplaceholder.typicode.com/posts",
-//             "method": "POST",
-//             "statusCode": 201,
-//             "timeTaken": 889
-//         }
-//     ],
-//     "totalElements": 1
-// }
+export interface RetryResponse {
+  total: number;
+  success: number;
+  failed: number;
+  skipped: number;
+  successIds: number[];
+  failedIds: number[];
+}
 
 export interface HistoryResponse {
   content: ApiHistoryItem[];

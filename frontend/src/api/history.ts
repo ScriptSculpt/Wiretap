@@ -11,6 +11,7 @@ interface HistoryParams {
   method?: string;
   url?: string;
   search?: string;
+  ids?: number[];
 }
 
 export const fetchHistory = async (params: HistoryParams = {}): Promise<HistoryResponse> => {
@@ -26,6 +27,7 @@ export const fetchHistory = async (params: HistoryParams = {}): Promise<HistoryR
   if (params.method) searchParams.append('method', params.method);
   if (params.url) searchParams.append('url', params.url);
   if (params.search) searchParams.append('search', params.search);
+  if (params.ids && params.ids.length > 0) searchParams.append('ids', params.ids.join(','));
 
   const url = searchParams.toString() ? `/api/history?${searchParams.toString()}` : '/api/history'; 
   const response = await fetch(url);

@@ -1,4 +1,4 @@
-import type { ApiResponseBody } from '../types';
+import type { ApiResponseBody, RetryResponse } from '../types';
 
 export const retryApi = async (id: number): Promise<ApiResponseBody> => {
     try {
@@ -17,4 +17,16 @@ export const retryApi = async (id: number): Promise<ApiResponseBody> => {
             requestId: '',
         }
     }
+};
+
+export const retryFailed = async (): Promise<RetryResponse> => {
+  const response = await fetch('/api/history/retry-failed', {
+    method: 'GET',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to run recovery: ${response.status}`);
+  }
+
+  return response.json();
 };

@@ -3,6 +3,7 @@ import type { ApiResponseBody, ApiRequestBody } from '../types';
 import { RequestPanel } from '../components/RequestPanel';
 import { ResponsePanel } from '../components/ResponsePanel';
 import { HistoryList } from '../components/HistoryList';
+import { Recovery } from '../components/Recovery';
 import './Wiretap.css';
 import { executeApi } from '../api/execute';
 
@@ -10,7 +11,7 @@ export const Wiretap = () => {
   const [response, setResponse] = useState<ApiResponseBody | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'request' | 'history'>('request');
+  const [activeTab, setActiveTab] = useState<'request' | 'history' | 'recovery'>('request');
 
   // Clear response when switching tabs
   useEffect(() => {
@@ -61,6 +62,16 @@ export const Wiretap = () => {
         >
           History
         </button>
+        <button
+          className={`console__tab ${activeTab === 'recovery' ? 'console__tab--active' : ''}`}
+          onClick={() => {
+            setResponse(null);
+            setError(null);
+            setActiveTab('recovery');
+          }}
+        >
+          Recovery
+        </button>
       </div>
 
       <div className="console__content">
@@ -73,7 +84,7 @@ export const Wiretap = () => {
               <ResponsePanel response={response} isLoading={isLoading} />
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'history' ? (
           <div className="console__split">
             <div className="console__panel">
               <HistoryList 
@@ -85,6 +96,10 @@ export const Wiretap = () => {
             <div className="console__panel">
               <ResponsePanel response={response} isLoading={isLoading} />
             </div>
+          </div>
+        ) : (
+          <div className="console__full">
+            <Recovery />
           </div>
         )}
       </div>
