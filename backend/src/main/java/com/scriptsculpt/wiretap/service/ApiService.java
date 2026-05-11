@@ -63,7 +63,8 @@ public class ApiService {
         long start = System.currentTimeMillis();
 
         LocalDateTime now = LocalDateTime.now();
-
+        
+        log.info("Executing API request. requestId={}, method={}, url={}", apiRequestId, method, request.getUrl());
         try {
             HttpHeaders headers = new HttpHeaders();
             if(request.getHeaders() != null) {
@@ -104,7 +105,7 @@ public class ApiService {
         } catch (HttpStatusCodeException ex) {
             long timeTaken = System.currentTimeMillis() - start;
 //            saveErrorHistory(request, ex, timeTaken, apiRequestId, 0);
-
+            log.error("API request resulted in error response. requestId={}, method={}, url={}, statusCode={}", apiRequestId, method, request.getUrl(), ex.getStatusCode(), ex);
             ResponseEntity<String> response = ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsString());
 
             ApiHistory history = buildHistory(
@@ -129,7 +130,7 @@ public class ApiService {
         } catch (Exception ex) {
             long timeTaken = System.currentTimeMillis() - start;
 //            saveGenericErrorHistory(request, ex, timeTaken, apiRequestId, 0);
-
+            log.error("Error executing API request. requestId={}, method={}, url={}", apiRequestId, method, request.getUrl(), ex);
             ResponseEntity<String> response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
 
             ApiHistory history = buildHistory(
@@ -154,60 +155,8 @@ public class ApiService {
         }
     }
 
-//    public List<ApiHistoryResponse> getAllHistory() {
-//        List<ApiHistory> history = repository.findAll();
-//
-//        return history.stream().map(hist -> new ApiHistoryResponse(
-//                hist.getId(),
-//                hist.getUrl(),
-//                hist.getMethod(),
-//                hist.getStatusCode(),
-//                hist.getTimeTaken()
-//        )).toList();
-//    }
-
-//    public List<ApiHistory> getFailedHistory() {
-//        return repository.findByStatusCodeGreaterThanEqual(400);
-//    }
-//
-//    public List<ApiHistory> getSlowHistory(long threshold) {
-//        return repository.findByTimestampGreaterThan(threshold);
-//    }
-
-
-    /*
-    Type Page to ensure that the frontend can easily access the page info like size, total elements and total pages.
-    * */
-//    public Page<ApiHistory> getPaginatedHistory(int page, int size, String sortField, boolean desc) {
-//        Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
-//        Pageable pageable = PageRequest.of(page, size, sort);
-//        return  repository.findAll(pageable);
-//    }
-
-//    public Page<ApiHistoryResponse> getHistory(Integer statusCode, Integer minTime, int page, int size, String sortField, boolean desc) {
-//        Page<ApiHistory> historyPage;
-//
-//        Sort sort = desc ? Sort.by(sortField).descending() : Sort.by(sortField).ascending();
-//        Pageable pageable = PageRequest.of(page, size, sort);
-//
-//        if(statusCode != null) {
-//            historyPage = repository.findByStatusCode(statusCode, pageable);
-//        }
-//        else {
-//            historyPage = repository.findAll(pageable);
-//        }
-//
-//        return historyPage.map(hist -> new ApiHistoryResponse(
-//                hist.getId(),
-//                hist.getUrl(),
-//                hist.getMethod(),
-//                hist.getStatusCode(),
-//                hist.getTimestamp()
-//        ));
-//    }
-
     public Page<ApiHistoryResponse> getHistory(Integer status, Long minThreshold, Long maxThreshold, String method, String url, String search, Pageable pageable, List<Long> ids) {
-
+        log.info("Fetching API history with filters - status: {}, timeTaken: {}-{}, method: {}, url: {}, search: {}, ids: {}, page: {}, size: {}", status, minThreshold, maxThreshold, method, url, search, ids, pageable.getPageNumber(), pageable.getPageSize());
         Specification<ApiHistory> spec = Specification
                 .where(ApiHistorySpecification.hasMethod(method))
                 .and(ApiHistorySpecification.hasStatus(status))
@@ -230,6 +179,7 @@ public class ApiService {
     }
 
     public void deleteById(Long id) {
+        log.info("Deleting API history record with id: {}", id);
         if(!repository.existsById(id)) {
             throw new IllegalArgumentException("No record found with id: "+ id);
         }
@@ -238,6 +188,7 @@ public class ApiService {
 
     @Transactional
     public int deleteByStatus(String status) {
+        log.info("Deleting API history records with status: {}", status);
         if("SUCCEED".equalsIgnoreCase(status)) {
             return repository.deleteByStatusCodeLessThan(400);
         }else if("FAILED".equalsIgnoreCase(status)) {
@@ -247,6 +198,7 @@ public class ApiService {
     }
 
     public long deleteAll() {
+        log.info("Deleting all API history records");
         long count = repository.count();
         if(count == 0) {
             throw new IllegalArgumentException("No records found");
@@ -256,6 +208,7 @@ public class ApiService {
     }
 
     public ApiResponse retryApi(Long id) {
+        log.info("Retrying API call with id: {}", id);
         ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
 
         long start = System.currentTimeMillis();
@@ -279,6 +232,7 @@ public class ApiService {
     }
 
     public RetryResponse retryFailedApis() {
+        log.info("Retrying failed API calls");
         List<ApiHistory> failedApis = repository.findByStatusCodeGreaterThanEqual(400);
         Map<String, ApiHistory> lastestFailedApis = new HashMap<>();
 
@@ -516,6 +470,7 @@ public class ApiService {
 
     @PreDestroy
     public void shutdown() {
+        log.info("Shutting down scheduler");
         scheduler.shutdown();
     }
 }

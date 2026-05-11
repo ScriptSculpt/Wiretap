@@ -28,10 +28,6 @@ public class ApiController {
         this.apiService = apiService;
     }
 
-//    @PostMapping("/call")
-//    public ResponseEntity<String> callApi(@RequestBody ApiRequest request) {
-//        return apiService.callAPI(request);
-//    }
 
     @PostMapping("/execute")
     public ResponseEntity<ApiResponse> execute(@Valid @RequestBody ApiRequest request) {
@@ -39,48 +35,6 @@ public class ApiController {
 
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
-
-//    @GetMapping("/history")
-//    public ResponseEntity<List<ApiHistoryResponse>> getHistory() {
-//        List<ApiHistoryResponse> history = apiService.getAllHistory();
-//        return ResponseEntity.ok(history);
-//    }
-
-//    @GetMapping("/history/failed")
-//    public ResponseEntity<List<ApiHistory>> getFailed() {
-//        List<ApiHistory> failed = apiService.getFailedHistory();
-//        return  ResponseEntity.ok(failed);
-//    }
-//
-//    @GetMapping("/history/slow")
-//    public ResponseEntity<List<ApiHistory>> getSlow(@RequestParam("threshold") long threshold) {
-//        List<ApiHistory> slow = apiService.getSlowHistory(threshold);
-//        return  ResponseEntity.ok(slow);
-//    }
-
-//    @GetMapping("/history/page")
-//    public ResponseEntity<Page<ApiHistory>> getPageHistory(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size,
-//            @RequestParam(defaultValue = "timeTaken") String sortField,
-//            @RequestParam(defaultValue = "true") boolean desc
-//    ) {
-//        Page<ApiHistory> history = apiService.getPaginatedHistory(page, size, sortField, desc);
-//        return ResponseEntity.ok(history);
-//    }
-
-//    @GetMapping("/historyNew")
-//    public ResponseEntity<Page<ApiHistoryResponse>> getHistoryNew(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size,
-//            @RequestParam(defaultValue = "timestamp") String sortField,
-//            @RequestParam(defaultValue = "true") boolean desc,
-//            @RequestParam(required = false) Integer statusCode,
-//            @RequestParam(required = false) Integer minTime
-//    ) {
-//        Page<ApiHistoryResponse> history = apiService.getHistory(statusCode, minTime, page, size, sortField, desc);
-//        return ResponseEntity.ok(history);
-//    }
 
 
     @GetMapping("/history")
