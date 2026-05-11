@@ -25,7 +25,6 @@ public class ApiHistory {
     private int statusCode;
     private long timeTaken;
 
-    private int retryCount;
     private LocalDateTime timestamp;
 
     public Long getId() {
@@ -94,14 +93,6 @@ public class ApiHistory {
 
     public void setTimeTaken(long timeTaken) {
         this.timeTaken = timeTaken;
-    }
-
-    public int getRetryCount() {
-        return this.retryCount;
-    }
-
-    public void setRetryCount(int retryCount) {
-        this.retryCount = retryCount;
     }
 
     public LocalDateTime getTimestamp() {

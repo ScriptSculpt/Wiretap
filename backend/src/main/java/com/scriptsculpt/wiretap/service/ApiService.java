@@ -90,7 +90,6 @@ public class ApiService {
                     response,
                     timeTaken,
                     apiRequestId,
-                    0,
                     now
             );
 
@@ -115,7 +114,6 @@ public class ApiService {
                     response,
                     timeTaken,
                     apiRequestId,
-                    0,
                     now
             );
 
@@ -140,7 +138,6 @@ public class ApiService {
                     response,
                     timeTaken,
                     apiRequestId,
-                    0,
                     now
             );
 
@@ -208,28 +205,28 @@ public class ApiService {
     }
 
     public ApiResponse retryApi(Long id) {
-        log.info("Retrying API call with id: {}", id);
-        ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
+    log.info("Retrying API call with id: {}", id);
+    ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
 
-        long start = System.currentTimeMillis();
-        CompletableFuture<ResponseEntity<String>> future= retry(history, true);
+    long start = System.currentTimeMillis();
+    CompletableFuture<ResponseEntity<String>> future= retry(history, true);
 
-        try {
-            ResponseEntity<String> res = future.join();
+    try {
+        ResponseEntity<String> res = future.join();
 
-            long timeTaken = System.currentTimeMillis() - start;
+        long timeTaken = System.currentTimeMillis() - start;
 
-            return new ApiResponse(
-                    res.getBody(),
-                    res.getStatusCode().value(),
-                    timeTaken,
-                    history.getRequestId()
-            );
-        } catch (Exception ex){
-            Throwable cause = (ex.getCause() != null) ? ex.getCause() : ex;
-            throw new RuntimeException("Retry failed due to external API error", cause);
-        }
+        return new ApiResponse(
+                res.getBody(),
+                res.getStatusCode().value(),
+                timeTaken,
+                history.getRequestId()
+        );
+    } catch (Exception ex){
+        Throwable cause = (ex.getCause() != null) ? ex.getCause() : ex;
+        throw new RuntimeException("Retry failed due to external API error", cause);
     }
+}
 
     public RetryResponse retryFailedApis() {
         log.info("Retrying failed API calls");
@@ -239,8 +236,14 @@ public class ApiService {
         for(ApiHistory history : failedApis) {
             String requestId = history.getRequestId();
 
-            // If not present or current is newer than lastest, update it
-            if(!lastestFailedApis.containsKey(requestId) || history.getId() > lastestFailedApis.get(requestId).getId()) {
+            if(lastestFailedApis.containsKey(requestId)) {
+                continue;
+            }
+
+            ApiHistory lastestHistory = repository.findTopByRequestIdOrderByIdDesc(requestId);
+
+            // If not present update it only if the lastest history for the request id is failed
+            if(lastestHistory.getStatusCode() >= 400) {
                 lastestFailedApis.put(requestId, history);
             }
         }
@@ -254,7 +257,7 @@ public class ApiService {
         int skipped = 0;
 
         for(ApiHistory history : failedApisToRetry) {
-            if(history.getRetryCount() >= MAX_RETRIES) {
+            if(!isRetryable(history.getStatusCode())) {
                 skipped++;
                 continue;
             }
@@ -301,7 +304,6 @@ public class ApiService {
         );
     }
 
-
     private CompletableFuture<ResponseEntity<String>> retry(ApiHistory history, boolean isManualRetry) {
         String requestId = history.getRequestId();
 
@@ -313,14 +315,14 @@ public class ApiService {
             );
         }
 
-        return retryInternal(history, isManualRetry);
+        return retryInternal(history, isManualRetry, 0);
     }
 
-    private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isManualRetry) {
+    private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isManualRetry, int currentAttempt) {
 
         CompletableFuture<ResponseEntity<String>> future = new CompletableFuture<>();
 
-        int retryCount = history.getRetryCount();
+        int retryCount = currentAttempt;
 
         if(!isManualRetry && retryCount >= MAX_RETRIES) {
             future.complete(
@@ -337,8 +339,6 @@ public class ApiService {
         String url = history.getUrl();
         HttpMethod method = resolveMethod(history.getMethod());
         String body = history.getRequestBody();
-
-//        HttpEntity <String> entity = "GET".equalsIgnoreCase(history.getMethod()) ? new HttpEntity<>((String) null) : new HttpEntity<>(body);
 
         HttpHeaders headers = new HttpHeaders();
         if(history.getHeaders() != null) {
@@ -389,7 +389,6 @@ public class ApiService {
                 response,
                 endTime-startTime,
                 history.getRequestId(),
-                isManualRetry ? 0 : retryCount + 1,
                 now
         );
 
@@ -407,7 +406,7 @@ public class ApiService {
             long delay = (long) Math.pow(2, retryCount) * 1000;
 
             scheduler.schedule(() -> {
-                CompletableFuture<ResponseEntity<String>> next = retryInternal(newHistory, false);
+                CompletableFuture<ResponseEntity<String>> next = retryInternal(newHistory, false, retryCount+1);
                 next.whenComplete((result,ex) -> {
                     if(ex != null) {
                         future.complete(
@@ -426,7 +425,13 @@ public class ApiService {
         return future;
     }
 
-    private ApiHistory buildHistory(String url, String method, String requestBody, ResponseEntity<String> response, long timeTaken, String requestId, int retryCount, LocalDateTime timestamp) {
+    private static final Set<Integer> RETRYABLE_CODES = Set.of(500, 502, 503, 504, 429);
+
+    private boolean isRetryable(int statusCode) {
+        return RETRYABLE_CODES.contains(statusCode);
+    }
+
+    private ApiHistory buildHistory(String url, String method, String requestBody, ResponseEntity<String> response, long timeTaken, String requestId, LocalDateTime timestamp) {
         ApiHistory newHistory = new ApiHistory();
         newHistory.setUrl(url);
         newHistory.setMethod(method);
@@ -435,7 +440,6 @@ public class ApiService {
         newHistory.setResponseBody(truncate(response.getBody()));
         newHistory.setStatusCode(response.getStatusCode().value());
         newHistory.setTimeTaken(timeTaken);
-        newHistory.setRetryCount(retryCount);
         newHistory.setTimestamp(timestamp);
 
         return  newHistory;
