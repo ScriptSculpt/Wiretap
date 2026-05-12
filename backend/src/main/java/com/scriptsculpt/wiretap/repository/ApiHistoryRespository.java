@@ -8,14 +8,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
-//public interface ApiHistoryRespository extends JpaRepository<ApiHistory, Long> {
-//    List<ApiHistory> findByStatusCodeGreaterThanEqual(int statusCode);
-//
-//    List<ApiHistory> findByTimestampGreaterThan(long timestamp);
-//
-//    Page<ApiHistory> findByStatusCode(int statusCode, Pageable pageable);
-//}
-
 public interface ApiHistoryRespository extends JpaRepository<ApiHistory, Long>, JpaSpecificationExecutor<ApiHistory> {
     List<ApiHistory> findByStatusCodeGreaterThanEqual(int statusCode);
 
