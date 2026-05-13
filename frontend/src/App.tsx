@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Wiretap } from './pages/Wiretap';
-import { LoginPage } from './components/LoginPage';
+import { LoginPage } from './pages/LoginPage';
 import { clearToken, getToken, saveToken } from './auth';
 import './styles/global.css';
 
