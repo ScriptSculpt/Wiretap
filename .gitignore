@@ -7,3 +7,5 @@ target/
 .idea/
 node_modules/
 .env
+logs/
+backend/src/main/resources/application.properties
