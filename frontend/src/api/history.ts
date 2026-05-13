@@ -1,4 +1,5 @@
 import type { HistoryResponse } from '../types';
+import { fetchWithAuth } from './client';
 
 interface HistoryParams {
   page?: number;
@@ -29,8 +30,8 @@ export const fetchHistory = async (params: HistoryParams = {}): Promise<HistoryR
   if (params.search) searchParams.append('search', params.search);
   if (params.ids && params.ids.length > 0) searchParams.append('ids', params.ids.join(','));
 
-  const url = searchParams.toString() ? `/api/history?${searchParams.toString()}` : '/api/history'; 
-  const response = await fetch(url);
+  const url = searchParams.toString() ? `/api/history?${searchParams.toString()}` : '/api/history';
+  const response = await fetchWithAuth(url);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch history: ${response.status}`);

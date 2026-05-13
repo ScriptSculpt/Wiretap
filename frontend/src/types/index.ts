@@ -21,6 +21,15 @@ export interface ApiResponseBody {
   requestId: string;
 }
 
+export interface AuthRequest {
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+}
+
 export interface ApiHistoryItem {
   id: number;
   url: string;

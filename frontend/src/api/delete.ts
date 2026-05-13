@@ -1,7 +1,7 @@
-// filepath: src/api/delete.ts
+import { fetchWithAuth } from './client';
 
 export const deleteHistoryItem = async (id: number): Promise<void> => {
-  const response = await fetch(`/api/history/${id}/delete`, {
+  const response = await fetchWithAuth(`/api/history/${id}/delete`, {
     method: 'DELETE',
   });
 
@@ -11,7 +11,7 @@ export const deleteHistoryItem = async (id: number): Promise<void> => {
 };
 
 export const deleteAllHistory = async (): Promise<void> => {
-  const response = await fetch(`/api/history/delete-all?confirm=YES`, {
+  const response = await fetchWithAuth(`/api/history/delete-all?confirm=YES`, {
     method: 'DELETE',
   });
 
@@ -21,7 +21,7 @@ export const deleteAllHistory = async (): Promise<void> => {
 };
 
 export const deleteHistoryByStatus = async (status: string): Promise<void> => {
-  const response = await fetch(`/api/history/delete?status=${status}`, {
+  const response = await fetchWithAuth(`/api/history/delete?status=${status}`, {
     method: 'DELETE',
   });
 

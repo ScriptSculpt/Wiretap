@@ -7,7 +7,11 @@ import { Recovery } from '../components/Recovery';
 import './Wiretap.css';
 import { executeApi } from '../api/execute';
 
-export const Wiretap = () => {
+interface WiretapProps {
+  onLogout: () => void;
+}
+
+export const Wiretap = ({ onLogout }: WiretapProps) => {
   const [response, setResponse] = useState<ApiResponseBody | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +41,13 @@ export const Wiretap = () => {
   return (
     <div className="console">
       <header className="console__header">
-        <h1 className="console__logo">Wiretap</h1>
-        <p className="console__tagline">API Testing Made Simple</p>
+        <div>
+          <h1 className="console__logo">Wiretap</h1>
+          <p className="console__tagline">API Testing Made Simple</p>
+        </div>
+        <button className="console__logout" type="button" onClick={onLogout}>
+          Logout
+        </button>
       </header>
 
       <div className="console__tabs">

@@ -1,26 +1,20 @@
 import type { ApiResponseBody, RetryResponse } from '../types';
+import { fetchWithAuth } from './client';
 
 export const retryApi = async (id: number): Promise<ApiResponseBody> => {
-    try {
-        const response = await fetch(`/api/history/${id}/retry`, {
-            method: 'GET',
-        });
-        const data: ApiResponseBody = await response.json();
-        return data;
+  const response = await fetchWithAuth(`/api/history/${id}/retry`, {
+    method: 'GET',
+  });
 
-    } catch (error) {
-        console.error('Error retrying API for id', id, ':', error);
-        return {
-            responseBody: "An error occurred while retrying for id " + id,
-            statusCode: 0,
-            timeTaken: 0,
-            requestId: '',
-        }
-    }
+  if (!response.ok) {
+    throw new Error(`Failed to retry request: ${response.status}`);
+  }
+
+  return response.json();
 };
 
 export const retryFailed = async (): Promise<RetryResponse> => {
-  const response = await fetch('/api/history/retry-failed', {
+  const response = await fetchWithAuth('/api/history/retry-failed', {
     method: 'GET',
   });
 
