@@ -2,14 +2,22 @@ import type { ApiRequestBody, ApiResponseBody } from '../types';
 import { fetchWithAuth } from './client';
 
 export const executeApi = async (request: ApiRequestBody): Promise<ApiResponseBody> => {
-  const response = await fetchWithAuth('/api/execute', {
-    method: 'POST',
-    body: request,
-  });
+  try {
+    const response = await fetchWithAuth('/api/execute', {
+      method: 'POST',
+      body: request,
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to execute request: ${response.status}`);
+    const data: ApiResponseBody = await response.json();
+    return data;
+    
+  } catch (error) {
+    console.error('Error executing API:', error);
+    return {
+      responseBody: 'An error occurred while executing the API request.',
+      statusCode: 0,
+      timeTaken: 0,
+      requestId: '',
+    };
   }
-
-  return response.json();
 };
