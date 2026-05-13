@@ -21,10 +21,10 @@
 
 .response-panel__copy {
   background: transparent;
-  border: 1px solid #1f2937;
-  border-radius: 4px;
-  padding: 6px;
-  color: #9ca3af;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -33,9 +33,9 @@
 }
 
 .response-panel__copy:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .response-panel__meta {
@@ -87,11 +87,11 @@
 }
 
 .response-panel__body {
-  background: #0f172a;
-  border: 1px solid #1f2937;
-  border-radius: 6px;
-  padding: 16px;
-  color: #e5e7eb;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  color: var(--text);
   font-size: 13px;
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
   white-space: pre-wrap;

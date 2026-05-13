@@ -2,10 +2,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  border: 1px solid #1f2937;
-  border-radius: 6px;
-  background: #111827;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
 }
 
 .records-list__title {
@@ -38,10 +38,10 @@
 }
 
 .records-list__item {
-  background: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 6px;
-  padding: 12px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
 }
 
 .records-list__item-header {
@@ -134,16 +134,11 @@
 
 .records-list__page-btn {
   background: transparent;
-  border: 1px solid #3b82f6;
-  border-radius: 4px;
-  padding: 6px 12px;
-  color: #3b82f6;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--accent);
 
-.records-list__page-btn:hover:not(:disabled) {
   background: rgba(59, 130, 246, 0.1);
 }
 

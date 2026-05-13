@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import type { AuthRequest } from '../types';
 import { login, register } from '../api/auth';
+import logo from '../images/image.png';
 import './LoginPage.css';
 
 interface LoginPageProps {
@@ -51,11 +52,13 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
 
   return (
     <div className="auth-page">
+      <img src={logo} alt="Wiretap logo" className="auth-page__logo" />
+      <h1 className="auth-page__title">Wiretap</h1>
       <div className="auth-card">
         <div className="auth-card__header">
           <div>
-            <h1 className="auth-card__title">Wiretap</h1>
-            <p className="auth-card__subtitle">Secure API testing tool</p>
+            <h1 className="auth-card__title">Welcome Back</h1>
+            <p className="auth-card__subtitle">Sign in to continue</p>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import { RequestPanel } from '../components/RequestPanel';
 import { ResponsePanel } from '../components/ResponsePanel';
 import { HistoryList } from '../components/HistoryList';
 import { Recovery } from '../components/Recovery';
+import logo from '../images/image.png';
 import './Wiretap.css';
 import { executeApi } from '../api/execute';
 
@@ -41,9 +42,9 @@ export const Wiretap = ({ onLogout }: WiretapProps) => {
   return (
     <div className="console">
       <header className="console__header">
-        <div>
-          <h1 className="console__logo">Wiretap</h1>
-          <p className="console__tagline">API Testing Made Simple</p>
+        <div className="console__brand">
+          <img src={logo} alt="Wiretap logo" className="console__logo" />
+          <p className="console__tagline">Secure API testing tool</p>
         </div>
         <button className="console__logout" type="button" onClick={onLogout}>
           Logout

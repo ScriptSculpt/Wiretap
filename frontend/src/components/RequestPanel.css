@@ -26,11 +26,11 @@
 }
 
 .request-panel__method {
-  background: #0f172a;
-  border: 1px solid #1f2937;
-  border-radius: 6px;
-  padding: 10px 14px;
-  color: #e5e7eb;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -57,11 +57,11 @@
 
 .request-panel__url {
   flex: 1;
-  background: #0f172a;
-  border: 1px solid #1f2937;
-  border-radius: 6px;
-  padding: 10px 14px;
-  color: #e5e7eb;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
   font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s ease;
@@ -82,11 +82,11 @@
 }
 
 .request-panel__execute {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #22d3ee, #38bdf8);
   border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  color: white;
+  border-radius: 10px;
+  padding: 12px 20px;
+  color: #0f172a;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
