@@ -1,4 +1,4 @@
-import { clearToken, getToken } from '../auth';
+import { clearToken, getValidToken, isTokenExpired, getToken } from '../auth';
 
 export interface FetchOptions extends Omit<RequestInit, 'headers' | 'body'> {
   headers?: Record<string, string>;
@@ -6,7 +6,7 @@ export interface FetchOptions extends Omit<RequestInit, 'headers' | 'body'> {
 }
 
 export const fetchWithAuth = async (url: string, options: FetchOptions = {}): Promise<Response> => {
-  const token = getToken();
+  const token = getValidToken();
   const headers: Record<string, string> = {
     ...(options.headers ?? {}),
   };
@@ -17,6 +17,14 @@ export const fetchWithAuth = async (url: string, options: FetchOptions = {}): Pr
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (!token) {
+    const expiredToken = getToken();
+    if (expiredToken && isTokenExpired(expiredToken)) {
+      clearToken();
+      throw new Error('Session expired. Please login again.');
+    }
   }
 
   const body = options.body instanceof FormData
