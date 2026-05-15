@@ -32,19 +32,25 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
         onLogin(response.token);
       } else {
         if (form.password !== confirmPassword) {
+          setError('Passwords do not match.');
           throw new Error('Passwords do not match.');
         }
         if (form.password.length < 6) {
+          setError('Password must be at least 6 characters.');
           throw new Error('Password must be at least 6 characters.');
         }
         await register(form);
         setSuccess('Registration successful! You can now log in.');
         setForm({ username: '', password: '' });
         setConfirmPassword('');
-        setTimeout(() => setMode('login'), 2000);
+        setTimeout(() => {
+          setMode('login');
+          setSuccess(null);
+          setError(null);
+        }, 2000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred.');
+      mode === 'login' && setError('Login failed. Check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }

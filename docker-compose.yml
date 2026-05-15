@@ -1,0 +1,32 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: wiretap-postgres
+
+    environment:
+      POSTGRES_DB: wiretap
+      POSTGRES_USER: wiretap_user
+      POSTGRES_PASSWORD: password123
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: wiretap-backend
+
+    ports:
+      - "9090:8080"
+
+    env_file:
+      - ./backend/.env
+
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

@@ -5,7 +5,7 @@ target/
 *.war
 *.iml
 .idea/
-node_modules/
-.env
 logs/
 backend/src/main/resources/application.properties
+backend/.env
+frontend/node_modules/
