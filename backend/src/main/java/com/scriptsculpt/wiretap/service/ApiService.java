@@ -443,6 +443,8 @@ public class ApiService {
     }
 
     private ApiHistory buildHistory(String url, String method, String requestBody, ResponseEntity<String> response, long timeTaken, String requestId, LocalDateTime timestamp) {
+        System.out.println("Building history: " + requestBody);
+
         ApiHistory newHistory = new ApiHistory();
         newHistory.setUrl(url);
         newHistory.setMethod(method);
