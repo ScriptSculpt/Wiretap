@@ -5,7 +5,9 @@ import com.scriptsculpt.wiretap.dto.ApiRequest;
 import com.scriptsculpt.wiretap.dto.ApiResponse;
 import com.scriptsculpt.wiretap.dto.RetryResponse;
 import com.scriptsculpt.wiretap.entity.ApiHistory;
+import com.scriptsculpt.wiretap.entity.User;
 import com.scriptsculpt.wiretap.repository.ApiHistoryRespository;
+import com.scriptsculpt.wiretap.repository.UserRepository;
 import com.scriptsculpt.wiretap.specification.ApiHistorySpecification;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -16,12 +18,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
@@ -40,6 +45,8 @@ public class ApiService {
 
     private final ApiHistoryRespository repository;
 
+    private final UserRepository userRepository;
+
     private final RestTemplate restTemplate;
 
     private static final Logger log = LoggerFactory.getLogger(ApiService.class);
@@ -50,9 +57,10 @@ public class ApiService {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ApiService(ApiHistoryRespository repository, RestTemplate restTemplate) {
+    public ApiService(ApiHistoryRespository repository, RestTemplate restTemplate, UserRepository userRepository) {
         this.repository = repository;
         this.restTemplate = restTemplate;
+        this.userRepository = userRepository;
     }
 
 
@@ -154,8 +162,11 @@ public class ApiService {
 
     public Page<ApiHistoryResponse> getHistory(Integer status, Long minThreshold, Long maxThreshold, String method, String url, String search, Pageable pageable, List<Long> ids) {
         log.info("Fetching API history with filters - status: {}, timeTaken: {}-{}, method: {}, url: {}, search: {}, ids: {}, page: {}, size: {}", status, minThreshold, maxThreshold, method, url, search, ids, pageable.getPageNumber(), pageable.getPageSize());
+
+
         Specification<ApiHistory> spec = Specification
-                .where(ApiHistorySpecification.hasMethod(method))
+                .where(ApiHistorySpecification.belongsToUser(getCurrentUser().getId()))
+                .and(ApiHistorySpecification.hasMethod(method))
                 .and(ApiHistorySpecification.hasStatus(status))
                 .and(ApiHistorySpecification.greaterThanEqualTimeTaken(minThreshold))
                 .and(ApiHistorySpecification.lessThanEqualTimeTaken(maxThreshold))
@@ -441,6 +452,7 @@ public class ApiService {
         newHistory.setStatusCode(response.getStatusCode().value());
         newHistory.setTimeTaken(timeTaken);
         newHistory.setTimestamp(timestamp);
+        newHistory.setUser(getCurrentUser());
 
         return  newHistory;
     }
@@ -470,6 +482,17 @@ public class ApiService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid HTTP method: " + method);
         }
+    }
+
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if(auth == null || !auth.isAuthenticated()) {
+            throw new RuntimeException("Authentication required");
+        }
+
+        String username = auth.getName();
+
+        return userRepository.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated"));
     }
 
     @PreDestroy

@@ -63,4 +63,11 @@ public class ApiHistorySpecification {
         };
     }
 
+    public static Specification<ApiHistory> belongsToUser(Long userId) {
+        return (root, query, criteriaBuilder) -> {
+            if(userId == null) return null;
+            return criteriaBuilder.equal(root.get("user").get("id"), userId);
+        };
+    }
+
 }

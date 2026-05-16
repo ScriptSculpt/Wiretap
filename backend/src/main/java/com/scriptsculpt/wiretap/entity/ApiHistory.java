@@ -27,6 +27,12 @@ public class ApiHistory {
 
     private LocalDateTime timestamp;
 
+    @ManyToOne(fetch =  FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+
+
     public Long getId() {
         return  id;
     }
@@ -101,5 +107,13 @@ public class ApiHistory {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }
