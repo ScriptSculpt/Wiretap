@@ -6,6 +6,6 @@ target/
 *.iml
 .idea/
 logs/
-backend/src/main/resources/application.properties
+# backend/src/main/resources/application.properties 
 backend/.env
 frontend/node_modules/
