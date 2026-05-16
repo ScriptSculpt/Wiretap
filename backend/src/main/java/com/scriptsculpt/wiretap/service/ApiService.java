@@ -79,6 +79,9 @@ public class ApiService {
                 request.getHeaders().forEach((key, value) -> headers.set(key, value));
             }
 
+            System.out.println("Headers in execute: "+ request.getHeaders());
+            System.out.println("Transformed Headers in execute: "+ headers);
+
             boolean hasBody = request.getBody() != null && !request.getBody().isBlank();
             HttpEntity<String> entity = hasBody ? new HttpEntity<>(request.getBody(), headers) : new HttpEntity<>(headers);
 
