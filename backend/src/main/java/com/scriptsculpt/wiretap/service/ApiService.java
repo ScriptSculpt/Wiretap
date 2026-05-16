@@ -98,6 +98,7 @@ public class ApiService {
                     request.getUrl(),
                     request.getMethod(),
                     request.getBody(),
+                    request.getHeaders(),
                     response,
                     timeTaken,
                     apiRequestId,
@@ -122,6 +123,7 @@ public class ApiService {
                     request.getUrl(),
                     request.getMethod(),
                     request.getBody(),
+                    request.getHeaders(),
                     response,
                     timeTaken,
                     apiRequestId,
@@ -146,6 +148,7 @@ public class ApiService {
                     request.getUrl(),
                     request.getMethod(),
                     request.getBody(),
+                    request.getHeaders(),
                     response,
                     timeTaken,
                     apiRequestId,
@@ -355,9 +358,10 @@ public class ApiService {
         String body = history.getRequestBody();
 
         HttpHeaders headers = new HttpHeaders();
+        Map<String, String> headerMap = new HashMap<>();
         if(history.getHeaders() != null) {
             try{
-                Map<String, String> headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
+                headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
                 headerMap.forEach((key, value) -> headers.set(key, value));
             } catch (Exception e) {
                 throw new RuntimeException("Failed to parse headers", e);
@@ -400,6 +404,7 @@ public class ApiService {
                 url,
                 history.getMethod(),
                 body,
+                headerMap,
                 response,
                 endTime-startTime,
                 history.getRequestId(),
@@ -445,14 +450,18 @@ public class ApiService {
         return RETRYABLE_CODES.contains(statusCode);
     }
 
-    private ApiHistory buildHistory(String url, String method, String requestBody, ResponseEntity<String> response, long timeTaken, String requestId, LocalDateTime timestamp) {
+    private ApiHistory buildHistory(String url, String method, String requestBody,  Map<String, String> requestHeaders ,ResponseEntity<String> response, long timeTaken, String requestId, LocalDateTime timestamp) {
         System.out.println("Building history: " + requestBody);
+
+        ObjectMapper mapper = new ObjectMapper();
+        String headers = mapper.writeValueAsString(requestHeaders);
 
         ApiHistory newHistory = new ApiHistory();
         newHistory.setUrl(url);
         newHistory.setMethod(method);
         newHistory.setRequestId(requestId);
         newHistory.setRequestBody(requestBody);
+        newHistory.setHeaders(headers);
         newHistory.setResponseBody(truncate(response.getBody()));
         newHistory.setStatusCode(response.getStatusCode().value());
         newHistory.setTimeTaken(timeTaken);
