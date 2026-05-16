@@ -35,7 +35,7 @@ export const fetchWithAuth = async (url: string, options: FetchOptions = {}): Pr
         ? JSON.stringify(options.body)
         : undefined;
 
-  console.log('Making API request to:', `${import.meta.env.VITE_API_BASE_URL}${url}`);
+//   console.log('Making API request to:', `${import.meta.env.VITE_API_BASE_URL}${url}`);
   const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${url}`, {
     ...options,
     headers,
