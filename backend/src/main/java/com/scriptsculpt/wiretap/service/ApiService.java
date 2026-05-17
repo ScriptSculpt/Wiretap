@@ -334,7 +334,9 @@ public class ApiService {
             );
         }
 
-        return retryInternal(history, isManualRetry, 0);
+        return retryInternal(history, isManualRetry, 0).whenComplete((res, ex) -> {
+            activeRequestIds.remove(requestId);
+        });
     }
 
     private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isManualRetry, int currentAttempt) {
@@ -349,7 +351,6 @@ public class ApiService {
                             .status(history.getStatusCode())
                             .body(history.getResponseBody())
             );
-            activeRequestIds.remove(history.getRequestId());
             return future;
         }
 
@@ -366,7 +367,11 @@ public class ApiService {
                 headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
                 headerMap.forEach((key, value) -> headers.set(key, value));
             } catch (Exception e) {
-                throw new RuntimeException("Failed to parse headers", e);
+                future.complete(
+                        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to parse headers")
+                );
+
+                return future;
             }
 
         }
@@ -417,7 +422,6 @@ public class ApiService {
 
         if(response.getStatusCode().is2xxSuccessful()) {
             future.complete(response);
-            activeRequestIds.remove(history.getRequestId());
             return future;
         }
 
@@ -440,7 +444,6 @@ public class ApiService {
         }
         else {
             future.complete(response);
-            activeRequestIds.remove(history.getRequestId());
         }
 
         return future;
