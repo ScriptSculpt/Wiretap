@@ -15,4 +15,8 @@ public interface ApiHistoryRespository extends JpaRepository<ApiHistory, Long>, 
     int deleteByStatusCodeLessThan(int statusCode);
 
     ApiHistory findTopByRequestIdOrderByIdDesc(String requestId);
+
+    List<ApiHistory> findByUserIdAndStatusCodeGreaterThanEqual(Long userId, int statusCode);
+    ApiHistory findTopByUserIdAndRequestIdOrderByIdDesc(Long userId, String requestId);
+
 }

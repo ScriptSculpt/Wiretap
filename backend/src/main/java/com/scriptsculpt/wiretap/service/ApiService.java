@@ -247,7 +247,9 @@ public class ApiService {
 
     public RetryResponse retryFailedApis() {
         log.info("Retrying failed API calls");
-        List<ApiHistory> failedApis = repository.findByStatusCodeGreaterThanEqual(400);
+
+        User user = getCurrentUser();
+        List<ApiHistory> failedApis = repository.findByUserIdAndStatusCodeGreaterThanEqual(user.getId(), 400);
         Map<String, ApiHistory> lastestFailedApis = new HashMap<>();
 
         for(ApiHistory history : failedApis) {
@@ -257,7 +259,7 @@ public class ApiService {
                 continue;
             }
 
-            ApiHistory lastestHistory = repository.findTopByRequestIdOrderByIdDesc(requestId);
+            ApiHistory lastestHistory = repository.findTopByUserIdAndRequestIdOrderByIdDesc(user.getId(), requestId);
 
             // If not present update it only if the lastest history for the request id is failed
             if(lastestHistory.getStatusCode() >= 400) {
