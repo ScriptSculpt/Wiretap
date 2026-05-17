@@ -249,7 +249,9 @@ public class ApiService {
         log.info("Retrying failed API calls");
 
         User user = getCurrentUser();
-        List<ApiHistory> failedApis = repository.findByUserIdAndStatusCodeGreaterThanEqual(user.getId(), 400);
+        List<ApiHistory> failedApis = repository.findByUserIdAndStatusCodeGreaterThanEqualOrderByIdDesc(user.getId(), 400);
+
+        System.out.println("Failed APIs: " + failedApis.toString());
         Map<String, ApiHistory> lastestFailedApis = new HashMap<>();
 
         for(ApiHistory history : failedApis) {
@@ -260,6 +262,7 @@ public class ApiService {
             }
 
             ApiHistory lastestHistory = repository.findTopByUserIdAndRequestIdOrderByIdDesc(user.getId(), requestId);
+            System.out.println("Lastest APIs: " + lastestHistory.toString());
 
             // If not present update it only if the lastest history for the request id is failed
             if(lastestHistory.getStatusCode() >= 400) {
@@ -267,7 +270,10 @@ public class ApiService {
             }
         }
 
+
         Collection<ApiHistory> failedApisToRetry = lastestFailedApis.values();
+
+        System.out.println("Failed APIs: " + failedApisToRetry.toString());
 
         // ExecutorService executorService = Executors.newFixedThreadPool(20);
         List<CompletableFuture<ResponseEntity<String>>> futures = new ArrayList<>();
