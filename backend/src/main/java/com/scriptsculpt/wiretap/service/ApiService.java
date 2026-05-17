@@ -496,7 +496,7 @@ public class ApiService {
 
             return new ApiResponse(
                 response.getBody(), 
-                response.getStatusCodeValue(), 
+                response.getStatusCode().value(), 
                 timeTaken, 
                 history.getRequestId()
             );
