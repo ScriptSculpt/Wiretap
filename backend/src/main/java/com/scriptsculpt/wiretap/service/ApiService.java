@@ -244,14 +244,223 @@ public class ApiService {
         throw new RuntimeException("Retry failed due to external API error", cause);
     }
 }
+//
+//    public RetryResponse retryFailedApis() {
+//        log.info("Retrying failed API calls");
+//
+//        User user = getCurrentUser();
+//        List<ApiHistory> failedApis = repository.findByUserIdAndStatusCodeGreaterThanEqualOrderByIdDesc(user.getId(), 400);
+//
+//        System.out.println("Failed APIs: " + failedApis.toString());
+//        Map<String, ApiHistory> lastestFailedApis = new HashMap<>();
+//
+//        for(ApiHistory history : failedApis) {
+//            String requestId = history.getRequestId();
+//
+//            if(lastestFailedApis.containsKey(requestId)) {
+//                continue;
+//            }
+//
+//            ApiHistory lastestHistory = repository.findTopByUserIdAndRequestIdOrderByIdDesc(user.getId(), requestId);
+//            System.out.println("Lastest APIs: " + lastestHistory.toString());
+//
+//            // If not present update it only if the lastest history for the request id is failed
+//            if(lastestHistory.getStatusCode() >= 400) {
+//                lastestFailedApis.put(requestId, lastestHistory);
+//            }
+//        }
+//
+//
+//        Collection<ApiHistory> failedApisToRetry = lastestFailedApis.values();
+//
+//        System.out.println("Failed APIs: " + failedApisToRetry.toString());
+//
+//        // ExecutorService executorService = Executors.newFixedThreadPool(20);
+//        List<CompletableFuture<ResponseEntity<String>>> futures = new ArrayList<>();
+//        List<ApiHistory> historyList = new ArrayList<>();
+//
+//        int skipped = 0;
+//
+//        for(ApiHistory history : failedApisToRetry) {
+//            if(!isRetryable(history.getStatusCode())) {
+//                skipped++;
+//                continue;
+//            }
+//            historyList.add(history);
+//            futures.add(retry(history, false));
+//        }
+//
+//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+//
+//        int succeed = 0;
+//        int failed = 0;
+//
+//        List<Long> successIds = new ArrayList<>();
+//        List<Long> failedIds = new ArrayList<>();
+//
+//        for(int i=0; i< futures.size(); i++) {
+//            CompletableFuture<ResponseEntity<String>> future = futures.get(i);
+//            ApiHistory history = historyList.get(i);
+//            try {
+//                ResponseEntity<String> response = future.join();
+//                if(response.getStatusCode().is2xxSuccessful()) {
+//                    succeed++;
+//                    successIds.add(history.getId());
+//                }
+//                else  {
+//                    failed++;
+//                    failedIds.add(history.getId());
+//                }
+//            } catch (Exception ex) {
+//                failed++;
+//                failedIds.add(history.getId());
+//            }
+//        }
+////        executorService.shutdown();
+//
+//        int total = succeed + failed + skipped;
+//        return new RetryResponse(
+//                total,
+//                succeed,
+//                failed,
+//                skipped,
+//                successIds,
+//                failedIds
+//        );
+//    }
+//
+//    private CompletableFuture<ResponseEntity<String>> retry(ApiHistory history, boolean isManualRetry) {
+//        String requestId = history.getRequestId();
+//
+//        boolean acquired = activeRequestIds.add(requestId);
+//
+//        if(!acquired) {
+//            return CompletableFuture.completedFuture(
+//                    ResponseEntity.status(HttpStatus.CONFLICT).body("Retry already in progress for request id: " + requestId)
+//            );
+//        }
+//
+//        return retryInternal(history, isManualRetry, 0).whenComplete((res, ex) -> {
+//            activeRequestIds.remove(requestId);
+//        });
+//    }
+//
+//    private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isManualRetry, int currentAttempt) {
+//
+//        CompletableFuture<ResponseEntity<String>> future = new CompletableFuture<>();
+//
+//        int retryCount = currentAttempt;
+//
+//        if(!isManualRetry && retryCount >= MAX_RETRIES) {
+//            future.complete(
+//                    ResponseEntity
+//                            .status(history.getStatusCode())
+//                            .body(history.getResponseBody())
+//            );
+//            return future;
+//        }
+//
+//
+//
+//        String url = history.getUrl();
+//        HttpMethod method = resolveMethod(history.getMethod());
+//        String body = history.getRequestBody();
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        Map<String, String> headerMap = new HashMap<>();
+//        if(history.getHeaders() != null) {
+//            try{
+//                headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
+//                headerMap.forEach((key, value) -> headers.set(key, value));
+//            } catch (Exception e) {
+//                future.complete(
+//                        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to parse headers")
+//                );
+//
+//                return future;
+//            }
+//
+//        }
+//
+//        boolean hasBody = body != null && !body.isEmpty();
+//
+//        if(hasBody && headers.getContentType() == null) {
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//        }
+//
+//        HttpEntity<String> entity = hasBody ? new HttpEntity<>(body, headers) : new HttpEntity<>(headers);
+//
+//        LocalDateTime now = LocalDateTime.now();
+//        long startTime = System.currentTimeMillis();
+//        ResponseEntity<String> response;
+//
+//        try {
+//            response = restTemplate.exchange(
+//                    url,
+//                    method,
+//                    entity,
+//                    String.class
+//            );
+//        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+//            response = ResponseEntity
+//                    .status(ex.getStatusCode())
+//                    .body(ex.getResponseBodyAsString());
+//        } catch (Exception ex) {
+//            response = ResponseEntity
+//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(ex.getMessage());
+//        }
+//
+//        long endTime = System.currentTimeMillis();
+//
+//        ApiHistory newHistory = buildHistory(
+//                url,
+//                history.getMethod(),
+//                body,
+//                headerMap,
+//                response,
+//                endTime-startTime,
+//                history.getRequestId(),
+//                now
+//        );
+//
+//        saveHistory(newHistory);
+//
+//        if(response.getStatusCode().is2xxSuccessful()) {
+//            future.complete(response);
+//            return future;
+//        }
+//
+//        if(!isManualRetry) {
+//            // Adding exponential backoff when not manual retry
+//            // Delay doubles every time
+//            long delay = (long) Math.pow(2, retryCount) * 1000;
+//
+//            scheduler.schedule(() -> {
+//                CompletableFuture<ResponseEntity<String>> next = retryInternal(newHistory, false, retryCount+1);
+//                next.whenComplete((result,ex) -> {
+//                    if(ex != null) {
+//                        future.complete(
+//                                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage())
+//                        );
+//                    }
+//                    else future.complete(result);
+//                });
+//            }, delay, TimeUnit.MILLISECONDS);
+//        }
+//        else {
+//            future.complete(response);
+//        }
+//
+//        return future;
+//    }
+
+
+
 
     public RetryResponse retryFailedApis() {
         log.info("Retrying failed API calls");
-
-        User user = getCurrentUser();
-        List<ApiHistory> failedApis = repository.findByUserIdAndStatusCodeGreaterThanEqualOrderByIdDesc(user.getId(), 400);
-
-        System.out.println("Failed APIs: " + failedApis.toString());
+        List<ApiHistory> failedApis = repository.findByStatusCodeGreaterThanEqual(400);
         Map<String, ApiHistory> lastestFailedApis = new HashMap<>();
 
         for(ApiHistory history : failedApis) {
@@ -261,19 +470,15 @@ public class ApiService {
                 continue;
             }
 
-            ApiHistory lastestHistory = repository.findTopByUserIdAndRequestIdOrderByIdDesc(user.getId(), requestId);
-            System.out.println("Lastest APIs: " + lastestHistory.toString());
+            ApiHistory lastestHistory = repository.findTopByRequestIdOrderByIdDesc(requestId);
 
             // If not present update it only if the lastest history for the request id is failed
             if(lastestHistory.getStatusCode() >= 400) {
-                lastestFailedApis.put(requestId, lastestHistory);
+                lastestFailedApis.put(requestId, history);
             }
         }
 
-
         Collection<ApiHistory> failedApisToRetry = lastestFailedApis.values();
-
-        System.out.println("Failed APIs: " + failedApisToRetry.toString());
 
         // ExecutorService executorService = Executors.newFixedThreadPool(20);
         List<CompletableFuture<ResponseEntity<String>>> futures = new ArrayList<>();
@@ -316,7 +521,7 @@ public class ApiService {
                 failedIds.add(history.getId());
             }
         }
-//        executorService.shutdown();
+    //        executorService.shutdown();
 
         int total = succeed + failed + skipped;
         return new RetryResponse(
@@ -340,9 +545,7 @@ public class ApiService {
             );
         }
 
-        return retryInternal(history, isManualRetry, 0).whenComplete((res, ex) -> {
-            activeRequestIds.remove(requestId);
-        });
+        return retryInternal(history, isManualRetry, 0);
     }
 
     private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isManualRetry, int currentAttempt) {
@@ -357,6 +560,7 @@ public class ApiService {
                             .status(history.getStatusCode())
                             .body(history.getResponseBody())
             );
+            activeRequestIds.remove(history.getRequestId());
             return future;
         }
 
@@ -373,11 +577,7 @@ public class ApiService {
                 headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
                 headerMap.forEach((key, value) -> headers.set(key, value));
             } catch (Exception e) {
-                future.complete(
-                        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to parse headers")
-                );
-
-                return future;
+                throw new RuntimeException("Failed to parse headers", e);
             }
 
         }
@@ -428,6 +628,7 @@ public class ApiService {
 
         if(response.getStatusCode().is2xxSuccessful()) {
             future.complete(response);
+            activeRequestIds.remove(history.getRequestId());
             return future;
         }
 
@@ -450,10 +651,33 @@ public class ApiService {
         }
         else {
             future.complete(response);
+            activeRequestIds.remove(history.getRequestId());
         }
 
         return future;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     private static final Set<Integer> RETRYABLE_CODES = Set.of(500, 502, 503, 504, 429);
 
