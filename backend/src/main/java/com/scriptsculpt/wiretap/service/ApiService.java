@@ -459,7 +459,7 @@ public class ApiService {
 
 
     public ApiResponse retryApi(Long id) {
-        ApiHistory history = repository.findById(id).orElseThrow(() => new RuntimeException("Not found"));
+        ApiHistory history = repository.findById(id).orElseThrow(() -> new RuntimeException("Not found"));
         long start = System.currentTimeMillis();
 
         LocalDateTime now = LocalDateTime.now();

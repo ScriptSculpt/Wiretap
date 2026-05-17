@@ -72,12 +72,12 @@ public class ApiController {
         ApiResponse response = apiService.retryApi(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
-
-    @GetMapping("/history/retry-failed")
-    public ResponseEntity<RetryResponse> retryFailed() {
-        RetryResponse response = apiService.retryFailedApis();
-        return ResponseEntity.ok(response);
-    }
+//
+//    @GetMapping("/history/retry-failed")
+//    public ResponseEntity<RetryResponse> retryFailed() {
+//        RetryResponse response = apiService.retryFailedApis();
+//        return ResponseEntity.ok(response);
+//    }
 
     @DeleteMapping("/history/{id}/delete")
     public ResponseEntity<String> deleteApi(@PathVariable(name="id") Long id) {
