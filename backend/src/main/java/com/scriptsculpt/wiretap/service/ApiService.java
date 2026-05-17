@@ -263,7 +263,7 @@ public class ApiService {
 
             // If not present update it only if the lastest history for the request id is failed
             if(lastestHistory.getStatusCode() >= 400) {
-                lastestFailedApis.put(requestId, history);
+                lastestFailedApis.put(requestId, lastestHistory);
             }
         }
 
