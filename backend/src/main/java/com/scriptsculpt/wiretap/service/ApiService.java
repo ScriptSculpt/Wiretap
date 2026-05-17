@@ -221,29 +221,29 @@ public class ApiService {
         return count;
     }
 
-    public ApiResponse retryApi(Long id) {
-    log.info("Retrying API call with id: {}", id);
-    ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
-
-    long start = System.currentTimeMillis();
-    CompletableFuture<ResponseEntity<String>> future= retry(history, true);
-
-    try {
-        ResponseEntity<String> res = future.join();
-
-        long timeTaken = System.currentTimeMillis() - start;
-
-        return new ApiResponse(
-                res.getBody(),
-                res.getStatusCode().value(),
-                timeTaken,
-                history.getRequestId()
-        );
-    } catch (Exception ex){
-        Throwable cause = (ex.getCause() != null) ? ex.getCause() : ex;
-        throw new RuntimeException("Retry failed due to external API error", cause);
-    }
-}
+//    public ApiResponse retryApi(Long id) {
+//        log.info("Retrying API call with id: {}", id);
+//        ApiHistory history = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid apiId"));
+//
+//        long start = System.currentTimeMillis();
+//        CompletableFuture<ResponseEntity<String>> future= retry(history, true);
+//
+//        try {
+//            ResponseEntity<String> res = future.join();
+//
+//            long timeTaken = System.currentTimeMillis() - start;
+//
+//            return new ApiResponse(
+//                    res.getBody(),
+//                    res.getStatusCode().value(),
+//                    timeTaken,
+//                    history.getRequestId()
+//            );
+//        } catch (Exception ex){
+//            Throwable cause = (ex.getCause() != null) ? ex.getCause() : ex;
+//            throw new RuntimeException("Retry failed due to external API error", cause);
+//        }
+//    }
 //
 //    public RetryResponse retryFailedApis() {
 //        log.info("Retrying failed API calls");
@@ -458,204 +458,111 @@ public class ApiService {
 
 
 
-    public RetryResponse retryFailedApis() {
-        log.info("Retrying failed API calls");
-        List<ApiHistory> failedApis = repository.findByStatusCodeGreaterThanEqual(400);
-        Map<String, ApiHistory> lastestFailedApis = new HashMap<>();
-
-        for(ApiHistory history : failedApis) {
-            String requestId = history.getRequestId();
-
-            if(lastestFailedApis.containsKey(requestId)) {
-                continue;
-            }
-
-            ApiHistory lastestHistory = repository.findTopByRequestIdOrderByIdDesc(requestId);
-
-            // If not present update it only if the lastest history for the request id is failed
-            if(lastestHistory.getStatusCode() >= 400) {
-                lastestFailedApis.put(requestId, history);
-            }
-        }
-
-        Collection<ApiHistory> failedApisToRetry = lastestFailedApis.values();
-
-        // ExecutorService executorService = Executors.newFixedThreadPool(20);
-        List<CompletableFuture<ResponseEntity<String>>> futures = new ArrayList<>();
-        List<ApiHistory> historyList = new ArrayList<>();
-
-        int skipped = 0;
-
-        for(ApiHistory history : failedApisToRetry) {
-            if(!isRetryable(history.getStatusCode())) {
-                skipped++;
-                continue;
-            }
-            historyList.add(history);
-            futures.add(retry(history, false));
-        }
-
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-        int succeed = 0;
-        int failed = 0;
-
-        List<Long> successIds = new ArrayList<>();
-        List<Long> failedIds = new ArrayList<>();
-
-        for(int i=0; i< futures.size(); i++) {
-            CompletableFuture<ResponseEntity<String>> future = futures.get(i);
-            ApiHistory history = historyList.get(i);
-            try {
-                ResponseEntity<String> response = future.join();
-                if(response.getStatusCode().is2xxSuccessful()) {
-                    succeed++;
-                    successIds.add(history.getId());
-                }
-                else  {
-                    failed++;
-                    failedIds.add(history.getId());
-                }
-            } catch (Exception ex) {
-                failed++;
-                failedIds.add(history.getId());
-            }
-        }
-    //        executorService.shutdown();
-
-        int total = succeed + failed + skipped;
-        return new RetryResponse(
-                total,
-                succeed,
-                failed,
-                skipped,
-                successIds,
-                failedIds
-        );
-    }
-
-    private CompletableFuture<ResponseEntity<String>> retry(ApiHistory history, boolean isManualRetry) {
-        String requestId = history.getRequestId();
-
-        boolean acquired = activeRequestIds.add(requestId);
-
-        if(!acquired) {
-            return CompletableFuture.completedFuture(
-                    ResponseEntity.status(HttpStatus.CONFLICT).body("Retry already in progress for request id: " + requestId)
-            );
-        }
-
-        return retryInternal(history, isManualRetry, 0);
-    }
-
-    private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isManualRetry, int currentAttempt) {
-
-        CompletableFuture<ResponseEntity<String>> future = new CompletableFuture<>();
-
-        int retryCount = currentAttempt;
-
-        if(!isManualRetry && retryCount >= MAX_RETRIES) {
-            future.complete(
-                    ResponseEntity
-                            .status(history.getStatusCode())
-                            .body(history.getResponseBody())
-            );
-            activeRequestIds.remove(history.getRequestId());
-            return future;
-        }
-
-
-
-        String url = history.getUrl();
-        HttpMethod method = resolveMethod(history.getMethod());
-        String body = history.getRequestBody();
-
-        HttpHeaders headers = new HttpHeaders();
-        Map<String, String> headerMap = new HashMap<>();
-        if(history.getHeaders() != null) {
-            try{
-                headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
-                headerMap.forEach((key, value) -> headers.set(key, value));
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to parse headers", e);
-            }
-
-        }
-
-        boolean hasBody = body != null && !body.isEmpty();
-
-        if(hasBody && headers.getContentType() == null) {
-            headers.setContentType(MediaType.APPLICATION_JSON);
-        }
-
-        HttpEntity<String> entity = hasBody ? new HttpEntity<>(body, headers) : new HttpEntity<>(headers);
+    public ApiResponse retryApi(Long id) {
+        ApiHistory history = repository.findById(id).orElseThrow(() => new RuntimeException("Not found"));
+        long start = System.currentTimeMillis();
 
         LocalDateTime now = LocalDateTime.now();
-        long startTime = System.currentTimeMillis();
-        ResponseEntity<String> response;
 
         try {
-            response = restTemplate.exchange(
-                    url,
-                    method,
+            Map<String, String> headerMap = mapper.readValue(history.getHeaders(), new TypeReference<>() {});
+            HttpHeaders headers = new HttpHeaders();
+            headerMap.forEach((key, value) -> headers.set(key, value));
+
+            boolean hasBody = history.getRequestBody() != null && !history.getRequestBody().isEmpty();
+            HttpEntity<String> entity = hasBody ? new HttpEntity<>(history.getRequestBody(), headers) : new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    history.getUrl(),
+                    resolveMethod(history.getMethod()),
                     entity,
                     String.class
             );
-        } catch (HttpClientErrorException | HttpServerErrorException ex) {
-            response = ResponseEntity
-                    .status(ex.getStatusCode())
-                    .body(ex.getResponseBodyAsString());
+
+            long timeTaken = System.currentTimeMillis() - start;
+
+            ApiHistory newHistory = buildHistory(
+                    history.getUrl(),
+                    history.getMethod(),
+                    history.getRequestBody(),
+                    headerMap,
+                    response,
+                    timeTaken,
+                    history.getRequestId(),
+                    now
+            );
+
+            saveHistory(newHistory);
+
+            return new ApiResponse(
+                response.getBody(), 
+                response.getStatusCodeValue(), 
+                timeTaken, 
+                history.getRequestId()
+            );
+
+        } catch (HttpStatusCodeException ex) {
+            long timeTaken = System.currentTimeMillis() - start;
+            ResponseEntity<String> response = ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsString());
+
+            ApiHistory newHistory = buildHistory(
+                    history.getUrl(),
+                    history.getMethod(),
+                    history.getRequestBody(),
+                    history.getHeaders() != null ? mapper.readValue(history.getHeaders(), new TypeReference<>() {}) : Collections.emptyMap(),
+                    response,
+                    timeTaken,
+                    history.getRequestId(),
+                    now
+            );
+
+            saveHistory(newHistory);
+
+            return new ApiResponse(
+                    ex.getResponseBodyAsString(),
+                    ex.getStatusCode().value(),
+                    timeTaken,
+                    history.getRequestId()
+            );
         } catch (Exception ex) {
-            response = ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ex.getMessage());
+            long timeTaken = System.currentTimeMillis() - start;
+            ResponseEntity<String> response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+
+            ApiHistory newHistory = buildHistory(
+                    history.getUrl(),
+                    history.getMethod(),
+                    history.getRequestBody(),
+                    Collections.emptyMap(),
+                    response,
+                    timeTaken,
+                    history.getRequestId(),
+                    now
+            );
+
+            saveHistory(newHistory);
+
+            return new ApiResponse(
+                    ex.getMessage(),
+                    500,
+                    timeTaken,
+                    history.getRequestId()
+            );
         }
 
-        long endTime = System.currentTimeMillis();
-
-        ApiHistory newHistory = buildHistory(
-                url,
-                history.getMethod(),
-                body,
-                headerMap,
-                response,
-                endTime-startTime,
-                history.getRequestId(),
-                now
-        );
-
-        saveHistory(newHistory);
-
-        if(response.getStatusCode().is2xxSuccessful()) {
-            future.complete(response);
-            activeRequestIds.remove(history.getRequestId());
-            return future;
-        }
-
-        if(!isManualRetry) {
-            // Adding exponential backoff when not manual retry
-            // Delay doubles every time
-            long delay = (long) Math.pow(2, retryCount) * 1000;
-
-            scheduler.schedule(() -> {
-                CompletableFuture<ResponseEntity<String>> next = retryInternal(newHistory, false, retryCount+1);
-                next.whenComplete((result,ex) -> {
-                    if(ex != null) {
-                        future.complete(
-                                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage())
-                        );
-                    }
-                    else future.complete(result);
-                });
-            }, delay, TimeUnit.MILLISECONDS);
-        }
-        else {
-            future.complete(response);
-            activeRequestIds.remove(history.getRequestId());
-        }
-
-        return future;
     }
+
+
+//    public RetryResponse retryFailedApis() {
+//
+//    }
+//
+//    private CompletableFuture<ResponseEntity<String>> retry(ApiHistory history, boolean isManualRetry) {
+//
+//    }
+//
+//    private CompletableFuture<ResponseEntity<String>> retryInternal(ApiHistory history, boolean isManualRetry, int currentAttempt) {
+//
+//    }
 
 
 
